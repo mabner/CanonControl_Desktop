@@ -1,0 +1,160 @@
+# .gitignore file created for free with Tower (https://www.git-tower.com/)
+# For suggestions or improvements please contact us using support@git-tower.com
+# Generated on 2026-04-18
+# Includes: csharp, vscode, visual_studio, rider
+
+### Universal ###
+# Common files that should be ignored in all projects
+
+# Logs
+*.log
+# Temporary files
+*.tmp
+*~
+
+*.bak
+# Environment files (containing secrets, API keys, credentials)
+.env
+*.env
+.env.*
+
+# Local configuration that shouldn't be shared
+*.local
+
+### Csharp ###
+# csharp specific files
+
+bin/
+obj/
+*.user
+*.suo
+
+### Vscode ###
+# Visual Studio Code editor settings and workspace files
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+.history/
+*.vsix
+.ionide
+
+.vs/
+*.code-workspace
+.vscode-test
+.vscodeignore
+.vscode/chrome
+
+.vscode-server/
+.vscode/sftp.json
+.vscode/tags
+.devcontainer/
+
+### Visual_studio ###
+# visual_studio editor specific files
+
+# Visual Studio
+*.userosscache
+
+*.sln.docstates
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+
+x64/
+x86/
+build/
+bld/
+[Bb]in/
+
+[Oo]bj/
+[Ll]og/
+*.VisualState.xml
+TestResult.xml
+
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.psess
+*.vsp
+
+*.vspx
+*.sap
+ipch/
+*.aps
+*.ncb
+
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+
+*.VC.VC.opendb
+*.coverage
+*.coveragexml
+_UpgradeReport_Files/
+Backup*/
+
+UpgradeLog*.XML
+UpgradeLog*.htm
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+
+[Ll]ogs/
+Generated\ Files/
+BenchmarkDotNet.Artifacts/
+ScaffoldingReadMe.txt
+StyleCopReport.xml
+
+*_wpftmp.csproj
+.axoCover/*
+!.axoCover/settings.json
+coverage*.json
+coverage*.xml
+
+coverage*.info
+.vshistory/
+healthchecksdb
+
+### Rider ###
+# rider editor specific files
+
+# Rider
+.idea/
+*.iws
+*.iml
+*.ipr
+
+.idea_modules/
+out/
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+
+.idea/.idea.*
+.idea/indexLayout.xml
+.idea/contentModel.xml
+.idea/modules.xml
+.idea/rider.project.restore.info
+
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+.idea/shelf/
+.idea/config/
+
+riderModule.iml
+
+### Project specific ###
+Docs/*
+Platforms/*
+*.md
+!README.md
+!Docs/MainWindowSketch.jpg
