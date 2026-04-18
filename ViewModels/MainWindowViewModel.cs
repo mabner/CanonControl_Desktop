@@ -20,7 +20,11 @@ public partial class MainWindowViewModel : ViewModelBase
     private void ConnectCamera()
     {
         var result = _cameraService.Connect();
-        Status = result ? "Camera connected" : "Failed to connect";
+
+        if (result)
+            Status = $"Connected: {_cameraService.GetCameraName()}";
+        else
+            Status = "Failed to connect";
     }
 
     [RelayCommand]
