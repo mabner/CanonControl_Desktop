@@ -7,14 +7,27 @@
         x:Class="CanonControl.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
+        Width="800" Height="450"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
         Title="CanonControl">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
-             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    <StackPanel Margin="20" Spacing="10">
+
+        <TextBlock Text="{Binding Status}" FontSize="16"/>
+
+        <Button Content="Connect Camera"
+                Command="{Binding ConnectCameraCommand}" />
+
+        <Button Content="Start Live View"
+                Command="{Binding StartLiveViewCommand}" />
+
+    </StackPanel>
 
 </Window>

@@ -10,6 +10,7 @@
   <ItemGroup>
     <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
+    <AvaloniaResource Remove="Docs\Sample\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,5 +23,43 @@
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None
+      Include="Platforms\Windows\EDSDK.dll"
+      Link="runtimes/win-x64/native/EDSDK.dll"
+      CopyToOutputDirectory="Always"
+    />
+    <None
+      Include="Platforms\Linux\x64\libEDSDK.so"
+      Link="runtimes/linux-x64/native/libEDSDK.so"
+      CopyToOutputDirectory="Always"
+    />
+    <None
+      Include="Platforms\Linux\arm64\libEDSDK.so"
+      Link="runtimes/linux-arm64/native/libEDSDK.so"
+      CopyToOutputDirectory="Always"
+    />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaXaml Remove="Docs\Sample\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Docs\Sample\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="Docs\Sample\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Remove="Docs\Sample\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Docs\Sample\**" />
   </ItemGroup>
 </Project>
