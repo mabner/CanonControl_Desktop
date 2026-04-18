@@ -22,19 +22,25 @@ public static class NativeLibraryLoader
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            Load("Platforms/Windows/EDSDK.dll");
+            LoadFirstAvailable("runtimes/win-x64/native/EDSDK.dll", "Platforms/Windows/EDSDK.dll");
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
             {
                 // chmod +x libEDSDK.so
-                Load("Platforms/Linux/x64/libEDSDK.so");
+                LoadFirstAvailable(
+                    "runtimes/linux-x64/native/libEDSDK.so",
+                    "Platforms/Linux/x64/libEDSDK.so"
+                );
             }
             else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
             {
                 // chmod +x libEDSDK.so
-                Load("Platforms/Linux/arm64/libEDSDK.so");
+                LoadFirstAvailable(
+                    "runtimes/linux-arm64/native/libEDSDK.so",
+                    "Platforms/Linux/arm64/libEDSDK.so"
+                );
             }
             else
             {
@@ -43,13 +49,19 @@ public static class NativeLibraryLoader
         }
     }
 
-    private static void Load(string relativePath)
+    private static void LoadFirstAvailable(params string[] relativePaths)
     {
-        var fullPath = Path.Combine(AppContext.BaseDirectory, relativePath);
-
-        if (!File.Exists(fullPath))
-            throw new FileNotFoundException($"Library not found: {fullPath}");
-
-        NativeLibrary.Load(fullPath);
+        foreach (var relativePath in relativePaths)
+        {
+            var fullPath = Path.Combine(AppContext.BaseDirectory, relativePath);
+            if (File.Exists(fullPath))
+            {
+                NativeLibrary.Load(fullPath);
+                return;
+            }
+        }
+        throw new FileNotFoundException(
+            $"Native library not found. Probed paths: {string.Join(", ", relativePaths)}"
+        );
     }
 }
