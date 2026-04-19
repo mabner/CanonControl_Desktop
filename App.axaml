@@ -15,5 +15,6 @@
     </Application.Styles>
     <Application.Resources>
         <helpers:BoolToColorConverter x:Key="BoolToColorConverter" />
+        <helpers:EnumToBoolConverter x:Key="EnumToBoolConverter" />
     </Application.Resources>
 </Application>

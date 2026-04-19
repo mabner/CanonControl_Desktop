@@ -10,49 +10,95 @@
         Width="800" Height="450"
         CanResize="False"
         WindowStartupLocation="CenterScreen"
-        Title="CanonControl">
+        Title="{Binding CameraName}">
 
-        <Design.DataContext>
-                <!-- This only sets the DataContext for the previewer in an IDE,
-                to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-                <vm:MainWindowViewModel/>
-        </Design.DataContext>
+        <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="3*,2*">
+                <!-- Navigation Bar (Row 0, ColumnSpan 2) -->
+                <Grid Grid.Row="0" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto">
+                        <!-- Navigation buttons -->
+                        <Button Grid.Column="0"
+                                Content="Remote Capture"
+                                MinWidth="100" MinHeight="50" Margin="4"
+                                Command="{Binding NavigateToRemoteCaptureCommand}"
+                                IsEnabled="{Binding IsCameraConnected}"
+                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=RemoteCapture}" />
 
-        <StackPanel Margin="20" Spacing="10">
+                        <Button Grid.Column="1"
+                                Content="Focus Stack"
+                                MinWidth="100" MinHeight="50" Margin="4"
+                                Command="{Binding NavigateToFocusStackCommand}"
+                                IsEnabled="{Binding IsCameraConnected}"
+                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=FocusStack}" />
 
-                <TextBlock Text="{Binding Status}" FontSize="16" />
-                
-                <Button Content="Connect Camera"
-                        Command="{Binding ConnectCameraCommand}"
-                        IsEnabled="{Binding !IsCameraConnected}" />
-                <Button Content="Disconnect Camera"
-                        Command="{Binding DisconnectCameraCommand}"
-                        IsEnabled="{Binding IsCameraConnected}" />
+                        <Button Grid.Column="2"
+                                Content="Time Lapse"
+                                MinWidth="100" MinHeight="50" Margin="4"
+                                Command="{Binding NavigateToTimeLapseCommand}"
+                                IsEnabled="{Binding IsCameraConnected}"
+                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=TimeLapse}" />
 
-                <StackPanel Margin="20" Spacing="10">
+                        <Button Grid.Column="3"
+                                Content="Settings"
+                                MinWidth="100" MinHeight="50" Margin="4"
+                                Command="{Binding NavigateToSettingsCommand}"
+                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Settings}" />
+
+                        <!-- Column 4 is the spacer (*) -->
+
+                        <!-- Connection buttons -->
+                        <Button Grid.Column="5"
+                                Content="Connect"
+                                MinWidth="100" MinHeight="50" Margin="4"
+                                Command="{Binding ConnectCameraCommand}"
+                                IsEnabled="{Binding !IsCameraConnected}" />
+
+                        <Button Grid.Column="6"
+                                Content="Disconnect"
+                                MinWidth="100" MinHeight="50" Margin="4"
+                                Command="{Binding DisconnectCameraCommand}"
+                                IsEnabled="{Binding IsCameraConnected}" />
+                </Grid>
+
+                <!-- Live View Area (Row 1, Column 0) -->
+                <Border Grid.Row="1" Grid.Column="0" Background="Black">
+                        <Image Source="{Binding LiveImage}"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapInterpolationMode="LowQuality" />
+                </Border>
+
+                <!-- Control Panel (Row 2, Column 0) -->
+                <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Margin="4">
                         <Button Content="Live View"
-                                Command="{Binding OpenLiveViewCommand}"
+                                Width="80" Height="50" Margin="4"
+                                Command="{Binding ToggleLiveViewCommand}"
                                 IsEnabled="{Binding IsCameraConnected}" />
-                        <Button Content="Focus Stack"
-                                Command="{Binding OpenFocusStackCommand}"
+
+                        <Button Content="Focus Near"
+                                Width="80" Height="50" Margin="4"
+                                Command="{Binding FocusNearCommand}"
+                                IsEnabled="{Binding IsLiveViewActive}" />
+
+                        <Button Content="Focus Far"
+                                Width="80" Height="50" Margin="4"
+                                Command="{Binding FocusFarCommand}"
+                                IsEnabled="{Binding IsLiveViewActive}" />
+
+                        <Button Content="Auto Focus"
+                                Width="80" Height="50" Margin="4"
+                                Command="{Binding AutoFocusCommand}"
+                                IsEnabled="{Binding IsLiveViewActive}" />
+
+                        <Button Content="Capture"
+                                Width="120" Height="50" Margin="4"
+                                Command="{Binding ContextCaptureCommand}"
                                 IsEnabled="{Binding IsCameraConnected}" />
-                        <Button Content="Time Lapse"
-                                Command="{Binding OpenTimeLapseCommand}"
-                                IsEnabled="{Binding IsCameraConnected}" />
-                        <Button Content="Settings"
-                                Command="{Binding OpenSettingsCommand}" />
                 </StackPanel>
 
-                <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Ellipse Width="15" Height="15">
-                                <Ellipse.Fill>
-                                        <SolidColorBrush
-                                        Color="{Binding IsCameraConnected, Converter={StaticResource BoolToColorConverter}}" />
-                                </Ellipse.Fill>
-                        </Ellipse>
-                        <TextBlock Text="{Binding Status}" />
-                        <TextBlock Text="{Binding CameraName}" FontWeight="Bold" />
-                </StackPanel>
-        </StackPanel>
+                <!-- Side Panel (Row 1, Column 1) -->
+                <!-- ContentControl uses ViewLocator (from App.axaml.DataTemplates) to automatically resolve views for ViewModels -->
+                <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                        <ContentControl Content="{Binding CurrentSidePanelViewModel}" />
+                </ScrollViewer>
+        </Grid>
 
 </Window>
