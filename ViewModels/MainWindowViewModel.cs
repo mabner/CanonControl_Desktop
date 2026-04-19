@@ -1,4 +1,8 @@
-﻿using Avalonia.Media.Imaging;
+﻿using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Media.Imaging;
 using CanonControl.Models;
 using CanonControl.Services;
 using CanonControl.Views;
@@ -47,7 +51,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // Camera Commands
     [RelayCommand]
-    private void ConnectCamera()
+    private async Task ConnectCamera()
     {
         var result = _cameraService.Connect();
 
@@ -61,6 +65,10 @@ public partial class MainWindowViewModel : ViewModelBase
         else
         {
             Status = "Failed to connect";
+            await ShowErrorDialogAsync(
+                "Camera Connection Failed",
+                "No Canon camera detected. Please connect a camera and try again."
+            );
         }
     }
 
@@ -152,5 +160,56 @@ public partial class MainWindowViewModel : ViewModelBase
         var window = new SettingsWindow { DataContext = new SettingsViewModel() };
 
         window.Show();
+    }
+
+    // Helper method to show error dialogs
+    private async Task ShowErrorDialogAsync(string title, string message)
+    {
+        if (
+            Application.Current?.ApplicationLifetime
+            is IClassicDesktopStyleApplicationLifetime desktop
+        )
+        {
+            var mainWindow = desktop.MainWindow;
+            if (mainWindow != null)
+            {
+                var dialog = new Window
+                {
+                    Title = title,
+                    Width = 400,
+                    Height = 200,
+                    CanResize = false,
+                    WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                    Content = new StackPanel
+                    {
+                        Margin = new Avalonia.Thickness(20),
+                        Spacing = 20,
+                        Children =
+                        {
+                            new TextBlock
+                            {
+                                Text = message,
+                                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                            },
+                            new Button
+                            {
+                                Content = "OK",
+                                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                                MinWidth = 100,
+                                MinHeight = 44,
+                            },
+                        },
+                    },
+                };
+
+                // Wire up the OK button to close the dialog
+                if (dialog.Content is StackPanel panel && panel.Children[1] is Button okButton)
+                {
+                    okButton.Click += (s, e) => dialog.Close();
+                }
+
+                await dialog.ShowDialog(mainWindow);
+            }
+        }
     }
 }
