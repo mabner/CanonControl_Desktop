@@ -9,13 +9,21 @@ namespace CanonControl.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
+    # region Properties
+
     [ObservableProperty]
     private string _status = "Camera not connected";
 
     [ObservableProperty]
     private Bitmap _liveImage;
 
+    [ObservableProperty]
+    private bool _isLiveViewRunning;
+
     private readonly CameraService _cameraService;
+
+    #endregion Properties
+
 
     public MainWindowViewModel()
     {
@@ -36,12 +44,29 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task StartLiveView()
     {
+        if (IsLiveViewRunning)
+            return;
+
+        IsLiveViewRunning = true;
+
         await _cameraService.StartLiveViewAsync(
             (frame) =>
             {
-                using var ms = new MemoryStream(frame);
-                LiveImage = new Bitmap(ms);
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                {
+                    using var ms = new MemoryStream(frame);
+                    LiveImage = new Bitmap(ms);
+                });
             }
         );
+
+        IsLiveViewRunning = false;
+    }
+
+    [RelayCommand]
+    private void StopLiveView()
+    {
+        _cameraService.StopLiveView();
+        Status = "Live View stopped";
     }
 }

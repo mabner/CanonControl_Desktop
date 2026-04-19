@@ -30,6 +30,9 @@
 
         <Image Source="{Binding LiveImage}" Height="200"/>
 
+        <Button Content="Stop Live View"
+                Command="{Binding StopLiveViewCommand}" />
+
     </StackPanel>
 
 </Window>

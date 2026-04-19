@@ -10,6 +10,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CanonControl.CanonSDK;
@@ -92,14 +94,26 @@ public class EDSDKWrapper
         var err = EDSDK.EdsDownloadEvfImage(_camera, evfImage);
 
         if (err != EdsError.EDS_ERR_OK)
+        {
+            EDSDK.EdsRelease(evfImage);
+            EDSDK.EdsRelease(stream);
+
+            // tratamento inteligente
+            if ((uint)err == 0x00000081) // DEVICE_BUSY
+            {
+                Thread.Sleep(50);
+                return null;
+            }
+
             return null;
+        }
 
         EDSDK.EdsGetPointer(stream, out var pointer);
 
         EDSDK.EdsGetLength(stream, out var length);
 
         byte[] data = new byte[length];
-        System.Runtime.InteropServices.Marshal.Copy(pointer, data, 0, (int)length);
+        Marshal.Copy(pointer, data, 0, (int)length);
 
         EDSDK.EdsRelease(evfImage);
         EDSDK.EdsRelease(stream);

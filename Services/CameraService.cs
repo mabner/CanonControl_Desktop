@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CanonControl.CanonSDK;
 
@@ -18,6 +19,7 @@ namespace CanonControl.Services;
 public class CameraService
 {
     private readonly EDSDKWrapper _sdk = new();
+    private CancellationTokenSource _cts;
 
     public bool Connect()
     {
@@ -36,19 +38,42 @@ public class CameraService
 
     public async Task StartLiveViewAsync(Action<byte[]> onFrame)
     {
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
         _sdk.StartLiveView();
 
-        await Task.Run(async () =>
+        try
         {
-            while (true)
-            {
-                var frame = _sdk.GetLiveViewFrame();
+            await Task.Run(
+                async () =>
+                {
+                    while (!token.IsCancellationRequested)
+                    {
+                        var frame = _sdk.GetLiveViewFrame();
 
-                if (frame != null)
-                    onFrame(frame);
+                        if (frame != null)
+                            onFrame(frame);
 
-                await Task.Delay(30); //30 FPS
-            }
-        });
+                        await Task.Delay(30, token);
+                    }
+                },
+                token
+            );
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelamento esperado
+        }
+    }
+
+    public void StopLiveView()
+    {
+        if (_cts != null && !_cts.IsCancellationRequested)
+        {
+            _cts.Cancel();
+            _cts.Dispose();
+            _cts = null;
+        }
     }
 }
