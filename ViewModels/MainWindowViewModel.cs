@@ -40,35 +40,38 @@ public partial class MainWindowViewModel : ViewModelBase
         else
         {
             Status = "Failed to connect";
-    }
-    }
-
-    [RelayCommand]
-    private async Task StartLiveView()
-    {
-        if (IsLiveViewRunning)
-            return;
-
-        IsLiveViewRunning = true;
-
-        await _cameraService.StartLiveViewAsync(
-            (frame) =>
-            {
-                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-                {
-                    using var ms = new MemoryStream(frame);
-                    LiveImage = new Bitmap(ms);
-                });
-            }
-        );
-
-        IsLiveViewRunning = false;
+        }
     }
 
     [RelayCommand]
-    private void StopLiveView()
+    private void OpenLiveView()
     {
-        _cameraService.StopLiveView();
-        Status = "Live View stopped";
+        var window = new LiveViewWindow { DataContext = new LiveViewViewModel(_cameraService) };
+
+        window.Show();
+    }
+
+    [RelayCommand]
+    private void OpenFocusStack()
+    {
+        var window = new FocusStackWindow { DataContext = new FocusStackViewModel(_cameraService) };
+
+        window.Show();
+    }
+
+    [RelayCommand]
+    private void OpenTimeLapse()
+    {
+        var window = new TimeLapseWindow { DataContext = new TimeLapseViewModel(_cameraService) };
+
+        window.Show();
+    }
+
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        var window = new SettingsWindow { DataContext = new SettingsViewModel() };
+
+        window.Show();
     }
 }
