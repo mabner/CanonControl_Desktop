@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="using:CanonControl.ViewModels"
+             x:Class="CanonControl.Views.RemoteCaptureView"
+             x:DataType="vm:RemoteCaptureViewModel">
+  <StackPanel Spacing="16" Margin="16">
+
+    <!-- Camera Settings Display -->
+    <TextBlock Text="Camera Settings" FontSize="18" FontWeight="Bold" />
+
+    <StackPanel Spacing="8">
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="Speed:" Width="80" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding ShutterSpeed, FallbackValue='--'}" VerticalAlignment="Center" />
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="Aperture:" Width="80" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding Aperture, FallbackValue='--'}" VerticalAlignment="Center" />
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="ISO:" Width="80" VerticalAlignment="Center" />
+        <TextBlock Text="{Binding Iso, FallbackValue='--'}" VerticalAlignment="Center" />
+      </StackPanel>
+    </StackPanel>
+
+    <!-- Delay Timer Selection -->
+    <TextBlock Text="Capture Delay" FontSize="18" FontWeight="Bold" Margin="0,16,0,0" />
+
+    <ComboBox x:Name="DelayComboBox"
+              SelectedIndex="0"
+              MinHeight="44"
+              MinWidth="200"
+              SelectionChanged="OnDelaySelectionChanged">
+      <ComboBoxItem Content="No delay" Tag="0" />
+      <ComboBoxItem Content="2 seconds" Tag="2" />
+      <ComboBoxItem Content="5 seconds" Tag="5" />
+      <ComboBoxItem Content="10 seconds" Tag="10" />
+    </ComboBox>
+  </StackPanel>
+</UserControl>

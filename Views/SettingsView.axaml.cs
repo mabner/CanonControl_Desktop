@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace CanonControl;
+namespace CanonControl.Views;
 
 public partial class SettingsView : Window
 {

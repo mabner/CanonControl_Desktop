@@ -101,8 +101,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private void NavigateToRemoteCapture()
     {
         CurrentContext = NavigationContext.RemoteCapture;
-        // TODO: Instantiate RemoteCaptureViewModel when it's created
-        CurrentSidePanelViewModel = null; // Placeholder
+        CurrentSidePanelViewModel = new RemoteCaptureViewModel(_cameraService);
     }
 
     [RelayCommand]
