@@ -14,23 +14,28 @@ namespace CanonControl.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly CameraService _cameraService;
+    private readonly SettingsService _settingsService;
 
     public MainWindowViewModel()
     {
         _cameraService = new CameraService();
+        _settingsService = new SettingsService();
+
+        // load and apply settings
+        LoadSettings();
     }
 
     [ObservableProperty]
     private string _status = "Disconnected";
 
-    // Navigation State
+    // navigation state
     [ObservableProperty]
     private NavigationContext _currentContext = NavigationContext.RemoteCapture;
 
     [ObservableProperty]
     private ViewModelBase? _currentSidePanelViewModel;
 
-    // Camera State
+    // camera state
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(ToggleLiveViewCommand))]
     [NotifyCanExecuteChangedFor(nameof(ContextCaptureCommand))]
@@ -40,11 +45,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(WindowTitle))]
     private string _cameraName = string.Empty;
 
-    // Computed property for window title
+    // computed property for window title
     public string WindowTitle =>
         string.IsNullOrEmpty(CameraName) ? "CanonControl" : $"CanonControl - {CameraName}";
 
-    // Live View State
+    // live View State
     [ObservableProperty]
     private Bitmap? _liveImage;
 
@@ -58,7 +63,7 @@ public partial class MainWindowViewModel : ViewModelBase
     )]
     private bool _isLiveViewActive;
 
-    // Camera Commands
+    // camera commands
     [RelayCommand]
     private async Task ConnectCamera()
     {
@@ -91,7 +96,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Status = "Disconnected";
     }
 
-    // Navigation Commands
+    // navigation commands
     [RelayCommand]
     private void NavigateToRemoteCapture()
     {
@@ -121,19 +126,29 @@ public partial class MainWindowViewModel : ViewModelBase
         CurrentSidePanelViewModel = new SettingsViewModel();
     }
 
-    // Control Panel Commands
+    private void LoadSettings()
+    {
+        var settings = _settingsService.Load();
+
+        // apply settings to CameraService
+        _cameraService.LiveViewDuringAutoFocus = settings.LiveViewDuringAutoFocus;
+
+        // TODO: apply other settings (LiveViewFrameRate, etc.) when those features are implemented
+    }
+
+    // control panel commands
     [RelayCommand(CanExecute = nameof(IsCameraConnected))]
     private async Task ToggleLiveView()
     {
         if (!IsLiveViewActive)
         {
-            // Start live view
+            // start live view
             try
             {
-                // Start the live view task (it runs in background)
+                // start the live view task (it runs in background)
                 var liveViewTask = _cameraService.StartLiveViewAsync(frameData =>
                 {
-                    // Convert byte[] to Bitmap and update LiveImage on UI thread
+                    // convert byte[] to Bitmap and update LiveImage on UI thread
                     Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                     {
                         try
@@ -143,38 +158,38 @@ public partial class MainWindowViewModel : ViewModelBase
                         }
                         catch
                         {
-                            // Silently handle bitmap creation errors
+                            // silently handle bitmap creation errors
                         }
                     });
                 });
 
                 IsLiveViewActive = true;
 
-                // Explicitly notify focus commands to re-evaluate CanExecute
+                // explicitly notify focus commands to re-evaluate CanExecute
                 StartFocusNearCommand.NotifyCanExecuteChanged();
                 StartFocusFarCommand.NotifyCanExecuteChanged();
                 StopFocusCommand.NotifyCanExecuteChanged();
                 StartAutoFocusCommand.NotifyCanExecuteChanged();
                 StopAutoFocusCommand.NotifyCanExecuteChanged();
 
-                // Don't await the live view task - it runs continuously until stopped
+                // don't await the live view task - it runs continuously until stopped
             }
             catch
             {
-                // Silently handle errors - keep toggle in current state
+                // silently handle errors - keep toggle in current state
                 IsLiveViewActive = false;
             }
         }
         else
         {
-            // Stop live view
+            // stop live view
             try
             {
                 _cameraService.StopLiveView();
                 IsLiveViewActive = false;
                 LiveImage = null;
 
-                // Explicitly notify focus commands to re-evaluate CanExecute
+                // explicitly notify focus commands to re-evaluate CanExecute
                 StartFocusNearCommand.NotifyCanExecuteChanged();
                 StartFocusFarCommand.NotifyCanExecuteChanged();
                 StopFocusCommand.NotifyCanExecuteChanged();
@@ -183,7 +198,7 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             catch
             {
-                // Silently handle errors - keep toggle in current state
+                // silently handle errors - keep toggle in current state
             }
         }
     }
@@ -223,7 +238,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(IsCameraConnected))]
     private void ContextCapture() { }
 
-    // Legacy window-opening commands (to be deprecated)
+    // legacy window-opening commands (to be deprecated)
     [RelayCommand]
     private void OpenLiveView()
     {
@@ -257,7 +272,7 @@ public partial class MainWindowViewModel : ViewModelBase
         window.Show();
     }
 
-    // Helper method to show error dialogs
+    // helper method to show error dialogs
     private async Task ShowErrorDialogAsync(string title, string message)
     {
         if (
@@ -297,7 +312,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     },
                 };
 
-                // Wire up the OK button to close the dialog
+                // wire up the OK button to close the dialog
                 if (dialog.Content is StackPanel panel && panel.Children[1] is Button okButton)
                 {
                     okButton.Click += (s, e) => dialog.Close();

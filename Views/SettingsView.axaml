@@ -1,0 +1,64 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:vm="using:CanonControl.ViewModels"
+        x:Class="CanonControl.SettingsView"
+        x:DataType="vm:SettingsViewModel">
+  <StackPanel Spacing="16" Margin="16">
+    <!-- Save Path -->
+    <TextBlock Text="Save Path" FontWeight="Bold" />
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBox Grid.Column="0"
+               Text="{Binding SavePath}"
+               Watermark="Enter save path..."
+               MinHeight="44" />
+      <Button Grid.Column="1"
+              Content="Browse"
+              Command="{Binding BrowseSavePathCommand}"
+              MinWidth="80" MinHeight="44"
+              Margin="4,0,0,0" />
+    </Grid>
+
+    <!-- Auto Download -->
+    <CheckBox Content="Auto Download Images"
+              IsChecked="{Binding AutoDownload}"
+              MinHeight="44" />
+
+    <!-- Live View Frame Rate -->
+    <TextBlock Text="Live View Frame Rate (fps)" FontWeight="Bold" />
+    <ComboBox ItemsSource="{Binding FrameRateOptions}"
+              SelectedItem="{Binding LiveViewFrameRate}"
+              MinHeight="44"
+              HorizontalAlignment="Stretch" />
+
+    <!-- Live View During Auto Focus -->
+    <CheckBox Content="Live View During Auto Focus"
+              IsChecked="{Binding LiveViewDuringAutoFocus}"
+              MinHeight="44"
+              ToolTip.Tip="Enable real-time preview during autofocus. Disable if you experience stability issues." />
+
+    <!-- Save Button -->
+    <Button Content="Save Settings"
+            Command="{Binding SaveSettingsCommand}"
+            MinWidth="120" MinHeight="44"
+            HorizontalAlignment="Center"
+            Margin="0,16,0,0" />
+
+    <!-- Info Text -->
+    <TextBlock Text="Settings are saved automatically when you click Save."
+               FontSize="12"
+               Foreground="Gray"
+               TextWrapping="Wrap"
+               HorizontalAlignment="Center" />
+
+    <!-- Settings File Path -->
+    <TextBlock Text="{Binding SettingsFilePath, StringFormat='Settings file: {0}'}"
+               FontSize="10"
+               Foreground="DarkGray"
+               TextWrapping="Wrap"
+               HorizontalAlignment="Center"
+               Margin="0,8,0,0" />
+  </StackPanel>
+</Window>

@@ -23,6 +23,7 @@ public class CameraService
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _focusCts;
     private volatile bool _isEvfDownloadPaused = false;
+    public bool LiveViewDuringAutoFocus { get; set; } = true;
 
     #region Connect and Startup
 
@@ -233,7 +234,8 @@ public class CameraService
     {
         lock (_cameraLock)
         {
-            if (enabled)
+            // pause live view during autofocus if setting is disabled
+            if (enabled && !LiveViewDuringAutoFocus)
             {
                 _isEvfDownloadPaused = true;
             }
@@ -242,8 +244,14 @@ public class CameraService
 
             if (!enabled)
             {
+                // small delay after stopping autofocus to ensure camera is ready
                 Thread.Sleep(200);
-                _isEvfDownloadPaused = false;
+
+                // Resume live view if it was paused
+                if (!LiveViewDuringAutoFocus)
+                {
+                    _isEvfDownloadPaused = false;
+                }
             }
         }
     }
