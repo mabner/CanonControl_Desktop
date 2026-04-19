@@ -2,8 +2,33 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:CanonControl.ViewModels"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        Width="800" Height="450"
         x:Class="CanonControl.Views.LiveViewWindow"
-        Title="LiveViewWindow">
-  Welcome to Avalonia!
+        Title="Live View">
+  <Grid RowDefinitions="*,Auto" Margin="10">
+    <!-- IMAGEM -->
+    <Border Grid.Row="0" Background="Black">
+      <Image Source="{Binding LiveImage}" Stretch="Uniform" />
+    </Border>
+    <!-- CONTROLES -->
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10">
+
+      <Button Content="Start"
+              Height="60"
+              Width="150"
+              Command="{Binding StartLiveViewCommand}" />
+
+      <Button Content="Stop"
+              Height="60"
+              Width="150"
+              Command="{Binding StopLiveViewCommand}" />
+
+      <Button Content="Back"
+              Height="60"
+              Width="150"
+              Click="OnBackClick" />
+    </StackPanel>
+  </Grid>
 </Window>

@@ -11,4 +11,9 @@ public partial class LiveViewWindow : Window
     {
         InitializeComponent();
     }
+
+    private void OnBackClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        Close();
+    }
 }

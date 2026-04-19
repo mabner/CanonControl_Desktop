@@ -48,7 +48,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private void OpenLiveView()
     {
         var window = new LiveViewWindow { DataContext = new LiveViewViewModel(_cameraService) };
-
         window.Show();
     }
 
@@ -56,7 +55,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private void OpenFocusStack()
     {
         var window = new FocusStackWindow { DataContext = new FocusStackViewModel(_cameraService) };
-
         window.Show();
     }
 
@@ -64,7 +62,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private void OpenTimeLapse()
     {
         var window = new TimeLapseWindow { DataContext = new TimeLapseViewModel(_cameraService) };
-
         window.Show();
     }
 
@@ -72,7 +69,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private void OpenSettings()
     {
         var window = new SettingsWindow { DataContext = new SettingsViewModel() };
-
         window.Show();
     }
 }
