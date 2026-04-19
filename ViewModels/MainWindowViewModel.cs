@@ -49,9 +49,13 @@ public partial class MainWindowViewModel : ViewModelBase
     private Bitmap? _liveImage;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(FocusNearCommand))]
-    [NotifyCanExecuteChangedFor(nameof(FocusFarCommand))]
-    [NotifyCanExecuteChangedFor(nameof(AutoFocusCommand))]
+    [NotifyCanExecuteChangedFor(
+        nameof(StartFocusNearCommand),
+        nameof(StartFocusFarCommand),
+        nameof(StopFocusCommand),
+        nameof(StartAutoFocusCommand),
+        nameof(StopAutoFocusCommand)
+    )]
     private bool _isLiveViewActive;
 
     // Camera Commands
@@ -126,7 +130,8 @@ public partial class MainWindowViewModel : ViewModelBase
             // Start live view
             try
             {
-                await _cameraService.StartLiveViewAsync(frameData =>
+                // Start the live view task (it runs in background)
+                var liveViewTask = _cameraService.StartLiveViewAsync(frameData =>
                 {
                     // Convert byte[] to Bitmap and update LiveImage on UI thread
                     Avalonia.Threading.Dispatcher.UIThread.Post(() =>
@@ -144,6 +149,15 @@ public partial class MainWindowViewModel : ViewModelBase
                 });
 
                 IsLiveViewActive = true;
+
+                // Explicitly notify focus commands to re-evaluate CanExecute
+                StartFocusNearCommand.NotifyCanExecuteChanged();
+                StartFocusFarCommand.NotifyCanExecuteChanged();
+                StopFocusCommand.NotifyCanExecuteChanged();
+                StartAutoFocusCommand.NotifyCanExecuteChanged();
+                StopAutoFocusCommand.NotifyCanExecuteChanged();
+
+                // Don't await the live view task - it runs continuously until stopped
             }
             catch
             {
@@ -159,6 +173,13 @@ public partial class MainWindowViewModel : ViewModelBase
                 _cameraService.StopLiveView();
                 IsLiveViewActive = false;
                 LiveImage = null;
+
+                // Explicitly notify focus commands to re-evaluate CanExecute
+                StartFocusNearCommand.NotifyCanExecuteChanged();
+                StartFocusFarCommand.NotifyCanExecuteChanged();
+                StopFocusCommand.NotifyCanExecuteChanged();
+                StartAutoFocusCommand.NotifyCanExecuteChanged();
+                StopAutoFocusCommand.NotifyCanExecuteChanged();
             }
             catch
             {
@@ -167,22 +188,36 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand(CanExecute = nameof(IsLiveViewActive))]
-    private void FocusNear()
+    private bool CanExecuteFocusCommands() => IsLiveViewActive;
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void StartFocusNear()
     {
-        _cameraService.FocusNearMedium();
+        _cameraService.StartFocusNear();
     }
 
-    [RelayCommand(CanExecute = nameof(IsLiveViewActive))]
-    private void FocusFar()
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void StartFocusFar()
     {
-        _cameraService.FocusFarMedium();
+        _cameraService.StartFocusFar();
     }
 
-    [RelayCommand(CanExecute = nameof(IsLiveViewActive))]
-    private void AutoFocus()
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void StopFocus()
     {
-        _cameraService.SetEvfAutoFocus(true);
+        _cameraService.StopFocus();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void StartAutoFocus()
+    {
+        _cameraService.StartAutoFocus();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void StopAutoFocus()
+    {
+        _cameraService.StopAutoFocus();
     }
 
     [RelayCommand(CanExecute = nameof(IsCameraConnected))]

@@ -73,20 +73,17 @@
                                 Command="{Binding ToggleLiveViewCommand}"
                                 IsEnabled="{Binding IsCameraConnected}" />
 
-                        <Button Content="Focus Near"
-                                Width="80" Height="50" Margin="4"
-                                Command="{Binding FocusNearCommand}"
-                                IsEnabled="{Binding IsLiveViewActive}" />
+                        <Button x:Name="FocusNearButton"
+                                Content="Focus Near"
+                                Width="80" Height="50" Margin="4" />
 
-                        <Button Content="Focus Far"
-                                Width="80" Height="50" Margin="4"
-                                Command="{Binding FocusFarCommand}"
-                                IsEnabled="{Binding IsLiveViewActive}" />
+                        <Button x:Name="FocusFarButton"
+                                Content="Focus Far"
+                                Width="80" Height="50" Margin="4" />
 
-                        <Button Content="Auto Focus"
-                                Width="80" Height="50" Margin="4"
-                                Command="{Binding AutoFocusCommand}"
-                                IsEnabled="{Binding IsLiveViewActive}" />
+                        <Button x:Name="AutoFocusButton"
+                                Content="Auto Focus"
+                                Width="80" Height="50" Margin="4" />
 
                         <Button Content="Capture"
                                 Width="120" Height="50" Margin="4"
