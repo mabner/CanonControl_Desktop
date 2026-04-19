@@ -27,14 +27,33 @@ public class CameraService
 
     #region Connect and Startup
 
-    public bool Connect()
+    public async Task<bool> ConnectAsync()
     {
         NativeLibraryLoader.LoadEDSDK();
 
         if (!_sdk.Initialize())
             return false;
 
-        return _sdk.ConnectFirstCamera();
+        // poll for camera connection with timeout
+        const int maxAttempts = 20; // 10 seconds total (20 * 500ms)
+        const int delayMs = 500;
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            if (_sdk.ConnectFirstCamera())
+            {
+                return true;
+            }
+
+            // wait before next attempt (non-blocking)
+            await Task.Delay(delayMs);
+        }
+        return false;
+    }
+
+    public bool Connect()
+    {
+        return ConnectAsync().GetAwaiter().GetResult();
     }
 
     public void Disconnect()
@@ -148,7 +167,7 @@ public class CameraService
 
     public void StartFocusNear()
     {
-        StopFocus(); // garante que não tem outro rodando
+        StopFocus(); // make sure to stop any existing focus operation before starting a new one
 
         _focusCts = new CancellationTokenSource();
         var token = _focusCts.Token;
@@ -163,7 +182,7 @@ public class CameraService
                         _sdk.DriveLensNear(EdsEvfDriveLens.Near2);
                     }
 
-                    await Task.Delay(100, token); // velocidade do foco
+                    await Task.Delay(100, token); // focus adjustment interval
                 }
             },
             token
@@ -247,7 +266,7 @@ public class CameraService
                 // small delay after stopping autofocus to ensure camera is ready
                 Thread.Sleep(200);
 
-                // Resume live view if it was paused
+                // resume live view if it was paused
                 if (!LiveViewDuringAutoFocus)
                 {
                     _isEvfDownloadPaused = false;

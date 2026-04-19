@@ -67,8 +67,8 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private async Task ConnectCamera()
     {
-        var result = _cameraService.Connect();
-
+        Status = "Connecting...";
+        var result = await _cameraService.ConnectAsync();
         IsCameraConnected = result;
 
         if (result)

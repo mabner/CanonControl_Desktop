@@ -29,8 +29,17 @@ public class EDSDKWrapper
 
     public bool ConnectFirstCamera()
     {
+        // close any existing connection first
+        if (_camera != IntPtr.Zero)
+        {
+            EDSDK.EdsCloseSession(_camera);
+            EDSDK.EdsRelease(_camera);
+            _camera = IntPtr.Zero;
+        }
+
         IntPtr cameraList;
 
+        // get fresh camera list (detects newly connected cameras)
         if (EDSDK.EdsGetCameraList(out cameraList) != EdsError.EDS_ERR_OK)
             return false;
 
