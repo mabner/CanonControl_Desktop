@@ -1,4 +1,4 @@
-﻿using CanonControl.Services;
+using CanonControl.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CanonControl.ViewModels;
