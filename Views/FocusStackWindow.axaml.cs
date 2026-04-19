@@ -4,7 +4,7 @@ using Avalonia.Markup.Xaml;
 
 namespace CanonControl.Views;
 
-public partial class FocusStackWindow : Window
+public partial class FocusStackWindow : UserControl
 {
     public FocusStackWindow()
     {
