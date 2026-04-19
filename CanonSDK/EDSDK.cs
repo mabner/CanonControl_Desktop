@@ -64,6 +64,15 @@ public static class EDSDK
     ); // turn on live view
 
     [DllImport(DLL)]
+    public static extern EdsError EdsGetPropertyData(
+        IntPtr camera,
+        uint propertyID,
+        int param,
+        int size,
+        out uint data
+    ); // get live view status
+
+    [DllImport(DLL)]
     public static extern EdsError EdsCreateMemoryStream(uint size, out IntPtr stream); // image buffer
 
     [DllImport(DLL)]

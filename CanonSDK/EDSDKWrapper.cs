@@ -34,17 +34,24 @@ public class EDSDKWrapper
         if (EDSDK.EdsGetCameraList(out cameraList) != EdsError.EDS_ERR_OK)
             return false;
 
-        int count;
-        if (EDSDK.EdsGetChildCount(cameraList, out count) != EdsError.EDS_ERR_OK || count == 0)
-            return false;
+        try
+        {
+            int count;
+            if (EDSDK.EdsGetChildCount(cameraList, out count) != EdsError.EDS_ERR_OK || count == 0)
+                return false;
 
-        if (EDSDK.EdsGetChildAtIndex(cameraList, 0, out _camera) != EdsError.EDS_ERR_OK)
-            return false;
+            if (EDSDK.EdsGetChildAtIndex(cameraList, 0, out _camera) != EdsError.EDS_ERR_OK)
+                return false;
 
-        if (EDSDK.EdsOpenSession(_camera) != EdsError.EDS_ERR_OK)
-            return false;
+            if (EDSDK.EdsOpenSession(_camera) != EdsError.EDS_ERR_OK)
+                return false;
 
-        return true;
+            return true;
+        }
+        finally
+        {
+            EDSDK.EdsRelease(cameraList);
+        }
     }
 
     public string GetCameraName()
@@ -74,22 +81,49 @@ public class EDSDKWrapper
 
     #region Live View
 
-    public bool StartLiveView()
+    public bool StartEvf()
     {
-        uint device = EdsOutputDevice.PC;
+        if (!TryGetUInt32Property(EdsPropertyID.Evf_Mode, out var evfMode))
+        {
+            return false;
+        }
 
-        var err = EDSDK.EdsSetPropertyData(
-            _camera,
-            EdsPropertyID.Evf_OutputDevice,
-            0,
-            sizeof(uint),
-            ref device
-        ); // directs live view output to the PC
+        if (evfMode == 0)
+        {
+            evfMode = 1;
+            if (!TrySetUInt32Property(EdsPropertyID.Evf_Mode, evfMode))
+            {
+                return false;
+            }
+        }
 
-        return err == EdsError.EDS_ERR_OK;
+        if (!TryGetUInt32Property(EdsPropertyID.Evf_OutputDevice, out var device))
+        {
+            return false;
+        }
+
+        device |= EdsOutputDevice.PC;
+
+        return TrySetUInt32Property(EdsPropertyID.Evf_OutputDevice, device);
     }
 
-    public byte[] GetLiveViewFrame()
+    public bool EndEvf()
+    {
+        if (!TryGetUInt32Property(EdsPropertyID.Evf_OutputDevice, out var device))
+        {
+            return false;
+        }
+
+        if ((device & EdsOutputDevice.PC) == 0)
+        {
+            return true;
+        }
+
+        device &= ~EdsOutputDevice.PC;
+        return TrySetUInt32Property(EdsPropertyID.Evf_OutputDevice, device);
+    }
+
+    public byte[]? DownloadEvfFrame()
     {
         IntPtr stream;
         IntPtr evfImage;
@@ -132,27 +166,65 @@ public class EDSDKWrapper
 
     #region Focus Control
 
-    public void FocusNear(int step)
+    public void DriveLensNear(int step)
     {
         SendCommand(EdsCameraCommand.DriveLensEvf, step);
     }
 
-    public void FocusFar(int step)
+    public void DriveLensFar(int step)
     {
         SendCommand(EdsCameraCommand.DriveLensEvf, step);
     }
 
-    public void AutoFocus()
+    public void SetEvfAutoFocus(bool enabled)
     {
-        SendCommand(EdsCameraCommand.DoEvfAf, 0);
+        SendCommand(
+            EdsCameraCommand.DoEvfAf,
+            enabled ? EdsEvfAf.CameraCommand_EvfAf_ON : EdsEvfAf.CameraCommand_EvfAf_OFF
+        );
+    }
+
+    public void PressShutterButton(int shutterState)
+    {
+        SendCommand(EdsCameraCommand.PressShutterButton, shutterState);
     }
 
     public void TakePicture()
     {
-        SendCommand(EdsCameraCommand.TakePicture, 0);
+        // Canon sample behavior: press completely, then release.
+        PressShutterButton(EdsShutterButton.Completely);
+        PressShutterButton(EdsShutterButton.Off);
     }
 
     #endregion Focus Control
+
+    #region Backward-compatible aliases
+
+    public bool StartLiveView() => StartEvf();
+
+    public byte[]? GetLiveViewFrame() => DownloadEvfFrame();
+
+    public void FocusNear(int step) => DriveLensNear(step);
+
+    public void FocusFar(int step) => DriveLensFar(step);
+
+    public void StartEvfAutoFocus() => SetEvfAutoFocus(true);
+
+    public void StopEvfAutoFocus() => SetEvfAutoFocus(false);
+
+    #endregion Backward-compatible aliases
+
+    private bool TryGetUInt32Property(uint propertyId, out uint value)
+    {
+        return EDSDK.EdsGetPropertyData(_camera, propertyId, 0, sizeof(uint), out value)
+            == EdsError.EDS_ERR_OK;
+    }
+
+    private bool TrySetUInt32Property(uint propertyId, uint value)
+    {
+        return EDSDK.EdsSetPropertyData(_camera, propertyId, 0, sizeof(uint), ref value)
+            == EdsError.EDS_ERR_OK;
+    }
 
     public EdsError SendCommand(uint command, int param)
     {

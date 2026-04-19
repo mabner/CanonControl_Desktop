@@ -8,27 +8,24 @@
         x:Class="CanonControl.Views.LiveViewWindow"
         x:DataType="vm:LiveViewViewModel"
         Title="Live View">
-  <Grid RowDefinitions="*,Auto,*" Margin="10">
-    <Border Grid.Row="0" Background="Black">
-      <Image Source="{Binding LiveImage}" PointerPressed="OnImageClick" Stretch="Uniform" />
-    </Border>
-    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6">
-      <Button Content="Start" Width="80" Height="60"
-              Command="{Binding StartLiveViewCommand}" />
-      <Button Content="Stop" Width="80" Height="60"
-              Command="{Binding StopLiveViewCommand}" />
-      <Button Content="Back" Width="80" Height="60"
-              Click="OnBackClick" />
-    </StackPanel>
-    <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="6">
-      <Button Content="&lt;&lt;" Width="80" Height="60"
-              Command="{Binding FocusNearCommand}" />
-      <Button Content="AF" Width="80" Height="60"
-              Command="{Binding AutoFocusCommand}" />
-      <Button Content="&gt;&gt;" Width="80" Height="60"
-              Command="{Binding FocusFarCommand}" />
-      <Button Content="SHOT" Width="100" Height="60"
-              Command="{Binding TakePictureCommand}" />
-    </StackPanel>
-  </Grid>
+        <Grid RowDefinitions="*,Auto,*" Margin="10">
+                <Border Grid.Row="0" Background="Black">
+                        <Image Source="{Binding LiveImage}" Stretch="Uniform" />
+                </Border>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="6">
+                        <Button Content="Start" Width="80" Height="60"
+                                Command="{Binding StartLiveViewCommand}" />
+                        <Button Content="Stop" Width="80" Height="60"
+                                Command="{Binding StopLiveViewCommand}" />
+                        <Button Content="Back" Width="80" Height="60"
+                                Click="OnBackClick" />
+                </StackPanel>
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="6">
+                        <Button x:Name="FocusNearButton" Content="&lt;&lt;" Width="80" Height="60" />
+                        <Button x:Name="AutoFocusButton" Content="AF" Width="100" Height="60" />
+                        <Button x:Name="FocusFarButton" Content="&gt;&gt;" Width="80" Height="60" />
+                        <Button Content="SHOT" Width="100" Height="60"
+                                Command="{Binding TakePictureCommand}" />
+                </StackPanel>
+        </Grid>
 </Window>

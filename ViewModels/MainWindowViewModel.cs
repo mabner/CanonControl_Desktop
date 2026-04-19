@@ -47,7 +47,7 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenLiveView()
     {
-        var window = new LiveViewWindow { DataContext = new LiveViewViewModel(_cameraService) };
+        var window = new LiveViewWindow(new LiveViewViewModel(_cameraService));
         window.Show();
     }
 

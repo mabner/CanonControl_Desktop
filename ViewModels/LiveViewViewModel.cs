@@ -12,7 +12,7 @@ public partial class LiveViewViewModel : ViewModelBase
     private readonly CameraService _cameraService;
 
     [ObservableProperty]
-    private Bitmap _liveImage;
+    private Bitmap? _liveImage;
 
     public LiveViewViewModel(CameraService cameraService)
     {
@@ -24,10 +24,10 @@ public partial class LiveViewViewModel : ViewModelBase
     [RelayCommand]
     private async Task StartLiveView()
     {
-        await _cameraService.StartLiveViewAsync(
+        await _cameraService.StartEvfAsync(
             (frame) =>
             {
-                // UI só pode ser atualizada na thread principal
+                // UI can only be updated from the main thread, so we need to dispatch the update
                 Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                 {
                     using var ms = new MemoryStream(frame);
@@ -40,7 +40,7 @@ public partial class LiveViewViewModel : ViewModelBase
     [RelayCommand]
     private void StopLiveView()
     {
-        _cameraService.StopLiveView();
+        _cameraService.EndEvf();
     }
     #endregion Live View
 
@@ -59,21 +59,39 @@ public partial class LiveViewViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task AutoFocus()
+    private void StartAutoFocus()
     {
-        await Task.Run(() => _cameraService.AutoFocus());
+        _cameraService.StartAutoFocus();
+    }
+
+    [RelayCommand]
+    private void StopAutoFocus()
+    {
+        _cameraService.StopAutoFocus();
+    }
+
+    [RelayCommand]
+    private void StartFocusNear()
+    {
+        _cameraService.StartFocusNear();
+    }
+
+    [RelayCommand]
+    private void StartFocusFar()
+    {
+        _cameraService.StartFocusFar();
+    }
+
+    [RelayCommand]
+    private void StopFocus()
+    {
+        _cameraService.StopFocus();
     }
 
     [RelayCommand]
     private async Task TakePicture()
     {
         await Task.Run(() => _cameraService.TakePicture());
-    }
-
-    public void FocusAtPoint(double x, double y)
-    {
-        // inicialmente só chama AF
-        _cameraService.AutoFocus();
     }
 
     #endregion Focus Control

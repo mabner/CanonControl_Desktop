@@ -20,7 +20,9 @@ public class CameraService
 {
     private readonly EDSDKWrapper _sdk = new();
     private readonly object _cameraLock = new();
-    private CancellationTokenSource _cts;
+    private CancellationTokenSource? _cts;
+    private CancellationTokenSource? _focusCts;
+    private volatile bool _isEvfDownloadPaused = false;
 
     #region Connect and Startup
 
@@ -55,10 +57,15 @@ public class CameraService
 
     public async Task StartLiveViewAsync(Action<byte[]> onFrame)
     {
+        await StartEvfAsync(onFrame);
+    }
+
+    public async Task StartEvfAsync(Action<byte[]> onFrame)
+    {
         _cts = new CancellationTokenSource();
         var token = _cts.Token;
 
-        _sdk.StartLiveView();
+        _sdk.StartEvf();
 
         try
         {
@@ -67,11 +74,18 @@ public class CameraService
                 {
                     while (!token.IsCancellationRequested)
                     {
-                        byte[] frame;
+                        // pause live view when adjusting focus, to prevent camera from getting overwhelmed
+                        if (_isEvfDownloadPaused)
+                        {
+                            await Task.Delay(50, token);
+                            continue;
+                        }
+
+                        byte[]? frame;
 
                         lock (_cameraLock)
                         {
-                            frame = _sdk.GetLiveViewFrame();
+                            frame = _sdk.DownloadEvfFrame();
                         }
 
                         if (frame != null)
@@ -91,11 +105,24 @@ public class CameraService
 
     public void StopLiveView()
     {
+        EndEvf();
+    }
+
+    public void EndEvf()
+    {
         if (_cts != null && !_cts.IsCancellationRequested)
         {
             _cts.Cancel();
             _cts.Dispose();
             _cts = null;
+        }
+
+        StopFocus();
+        SetEvfAutoFocus(false);
+
+        lock (_cameraLock)
+        {
+            _sdk.EndEvf();
         }
     }
     #endregion Live View
@@ -104,46 +131,127 @@ public class CameraService
 
     public void FocusNearFine()
     {
-        _sdk.FocusNear(EdsEvfDriveLens.Near1);
+        _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
     }
 
     public void FocusNearMedium()
     {
         lock (_cameraLock)
         {
-            _sdk.FocusNear(EdsEvfDriveLens.Near2);
+            _isEvfDownloadPaused = true;
+            _sdk.DriveLensNear(EdsEvfDriveLens.Near2);
+            Thread.Sleep(100);
+            _isEvfDownloadPaused = false;
         }
+    }
+
+    public void StartFocusNear()
+    {
+        StopFocus(); // garante que não tem outro rodando
+
+        _focusCts = new CancellationTokenSource();
+        var token = _focusCts.Token;
+
+        Task.Run(
+            async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    lock (_cameraLock)
+                    {
+                        _sdk.DriveLensNear(EdsEvfDriveLens.Near2);
+                    }
+
+                    await Task.Delay(100, token); // velocidade do foco
+                }
+            },
+            token
+        );
     }
 
     public void FocusNearCoarse()
     {
-        _sdk.FocusNear(EdsEvfDriveLens.Near3);
+        _sdk.DriveLensNear(EdsEvfDriveLens.Near3);
     }
 
     public void FocusFarFine()
     {
-        _sdk.FocusFar(EdsEvfDriveLens.Far1);
+        _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
     }
 
     public void FocusFarMedium()
     {
         lock (_cameraLock)
         {
-            _sdk.FocusFar(EdsEvfDriveLens.Far2);
+            _isEvfDownloadPaused = true;
+            _sdk.DriveLensFar(EdsEvfDriveLens.Far2);
+            Thread.Sleep(100);
+            _isEvfDownloadPaused = false;
         }
+    }
+
+    public void StartFocusFar()
+    {
+        StopFocus();
+
+        _focusCts = new CancellationTokenSource();
+        var token = _focusCts.Token;
+
+        Task.Run(
+            async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    lock (_cameraLock)
+                    {
+                        _sdk.DriveLensFar(EdsEvfDriveLens.Far2);
+                    }
+
+                    await Task.Delay(100, token);
+                }
+            },
+            token
+        );
     }
 
     public void FocusFarCoarse()
     {
-        _sdk.FocusFar(EdsEvfDriveLens.Far3);
+        _sdk.DriveLensFar(EdsEvfDriveLens.Far3);
     }
 
-    public void AutoFocus()
+    public void StartAutoFocus()
+    {
+        SetEvfAutoFocus(true);
+    }
+
+    public void StopAutoFocus()
+    {
+        SetEvfAutoFocus(false);
+    }
+
+    public void SetEvfAutoFocus(bool enabled)
     {
         lock (_cameraLock)
         {
-            _sdk.AutoFocus();
+            if (enabled)
+            {
+                _isEvfDownloadPaused = true;
+            }
+
+            _sdk.SetEvfAutoFocus(enabled);
+
+            if (!enabled)
+            {
+                Thread.Sleep(200);
+                _isEvfDownloadPaused = false;
+            }
         }
+    }
+
+    public void StopFocus()
+    {
+        _focusCts?.Cancel();
+        _focusCts = null;
     }
 
     public void TakePicture()

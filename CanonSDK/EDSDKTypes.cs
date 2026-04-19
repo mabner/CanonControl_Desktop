@@ -49,11 +49,14 @@ public struct EdsCameraRef
 public static class EdsPropertyID
 {
     public const uint Evf_OutputDevice = 0x00000500;
+    public const uint Evf_Mode = 0x00000501;
 }
 
 public static class EdsOutputDevice
 {
+    public const uint TFT = 1;
     public const uint PC = 2;
+    public const uint PCSmall = 8;
 }
 
 #endregion Live View
@@ -62,9 +65,18 @@ public static class EdsOutputDevice
 
 public static class EdsCameraCommand
 {
-    public const uint DriveLensEvf = 0x00000103;
-    public const uint DoEvfAf = 0x00000102;
     public const uint TakePicture = 0x00000000;
+    public const uint PressShutterButton = 0x00000004;
+    public const uint DoEvfAf = 0x00000102;
+    public const uint DriveLensEvf = 0x00000103;
+}
+
+public static class EdsShutterButton
+{
+    // TODO: assign halfway to 'press and hold' the shutter button, and 'click' to completely
+    public const int Off = 0x00000000;
+    public const int Halfway = 0x00000001;
+    public const int Completely = 0x00000003;
 }
 
 public static class EdsEvfDriveLens
@@ -76,6 +88,16 @@ public static class EdsEvfDriveLens
     public const int Far1 = 0x00008001;
     public const int Far2 = 0x00008002;
     public const int Far3 = 0x00008003;
+}
+
+public static class EdsEvfAf
+{
+    public const int CameraCommand_EvfAf_OFF = 0;
+    public const int CameraCommand_EvfAf_ON = 1;
+
+    // Backward-compatible aliases
+    public const int ON = 1;
+    public const int OFF = 0;
 }
 
 #endregion Focus Control
