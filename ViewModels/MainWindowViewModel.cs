@@ -37,7 +37,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isCameraConnected;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WindowTitle))]
     private string _cameraName = string.Empty;
+
+    // Computed property for window title
+    public string WindowTitle =>
+        string.IsNullOrEmpty(CameraName) ? "CanonControl" : $"CanonControl - {CameraName}";
 
     // Live View State
     [ObservableProperty]

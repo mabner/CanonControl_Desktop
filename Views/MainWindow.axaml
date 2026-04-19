@@ -10,7 +10,7 @@
         Width="800" Height="450"
         CanResize="False"
         WindowStartupLocation="CenterScreen"
-        Title="{Binding CameraName}">
+        Title="{Binding WindowTitle}">
 
         <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="3*,2*">
                 <!-- Navigation Bar (Row 0, ColumnSpan 2) -->
