@@ -19,6 +19,8 @@ public partial class LiveViewViewModel : ViewModelBase
         _cameraService = cameraService;
     }
 
+    #region Live View
+
     [RelayCommand]
     private async Task StartLiveView()
     {
@@ -40,4 +42,39 @@ public partial class LiveViewViewModel : ViewModelBase
     {
         _cameraService.StopLiveView();
     }
+    #endregion Live View
+
+    #region Focus Control
+
+    [RelayCommand]
+    private async Task FocusNear()
+    {
+        await Task.Run(() => _cameraService.FocusNearMedium());
+    }
+
+    [RelayCommand]
+    private async Task FocusFar()
+    {
+        await Task.Run(() => _cameraService.FocusFarMedium());
+    }
+
+    [RelayCommand]
+    private async Task AutoFocus()
+    {
+        await Task.Run(() => _cameraService.AutoFocus());
+    }
+
+    [RelayCommand]
+    private async Task TakePicture()
+    {
+        await Task.Run(() => _cameraService.TakePicture());
+    }
+
+    public void FocusAtPoint(double x, double y)
+    {
+        // inicialmente só chama AF
+        _cameraService.AutoFocus();
+    }
+
+    #endregion Focus Control
 }

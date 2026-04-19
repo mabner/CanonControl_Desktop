@@ -19,7 +19,10 @@ namespace CanonControl.Services;
 public class CameraService
 {
     private readonly EDSDKWrapper _sdk = new();
+    private readonly object _cameraLock = new();
     private CancellationTokenSource _cts;
+
+    #region Connect and Startup
 
     public bool Connect()
     {
@@ -46,6 +49,10 @@ public class CameraService
         return _sdk.GetCameraName();
     }
 
+    #endregion Connect and Startup
+
+    #region Live View
+
     public async Task StartLiveViewAsync(Action<byte[]> onFrame)
     {
         _cts = new CancellationTokenSource();
@@ -60,7 +67,12 @@ public class CameraService
                 {
                     while (!token.IsCancellationRequested)
                     {
-                        var frame = _sdk.GetLiveViewFrame();
+                        byte[] frame;
+
+                        lock (_cameraLock)
+                        {
+                            frame = _sdk.GetLiveViewFrame();
+                        }
 
                         if (frame != null)
                             onFrame(frame);
@@ -86,4 +98,61 @@ public class CameraService
             _cts = null;
         }
     }
+    #endregion Live View
+
+    #region Focus Control
+
+    public void FocusNearFine()
+    {
+        _sdk.FocusNear(EdsEvfDriveLens.Near1);
+    }
+
+    public void FocusNearMedium()
+    {
+        lock (_cameraLock)
+        {
+            _sdk.FocusNear(EdsEvfDriveLens.Near2);
+        }
+    }
+
+    public void FocusNearCoarse()
+    {
+        _sdk.FocusNear(EdsEvfDriveLens.Near3);
+    }
+
+    public void FocusFarFine()
+    {
+        _sdk.FocusFar(EdsEvfDriveLens.Far1);
+    }
+
+    public void FocusFarMedium()
+    {
+        lock (_cameraLock)
+        {
+            _sdk.FocusFar(EdsEvfDriveLens.Far2);
+        }
+    }
+
+    public void FocusFarCoarse()
+    {
+        _sdk.FocusFar(EdsEvfDriveLens.Far3);
+    }
+
+    public void AutoFocus()
+    {
+        lock (_cameraLock)
+        {
+            _sdk.AutoFocus();
+        }
+    }
+
+    public void TakePicture()
+    {
+        lock (_cameraLock)
+        {
+            _sdk.TakePicture();
+        }
+    }
+
+    #endregion Focus Control
 }

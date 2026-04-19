@@ -18,6 +18,7 @@ namespace CanonControl.CanonSDK;
 public enum EdsError : uint
 {
     EDS_ERR_OK = 0x00000000,
+    EDS_ERR_DEVICE_BUSY = 0x00000081,
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -43,6 +44,8 @@ public struct EdsCameraRef
     public IntPtr Ref;
 }
 
+#region Live View
+
 public static class EdsPropertyID
 {
     public const uint Evf_OutputDevice = 0x00000500;
@@ -52,3 +55,27 @@ public static class EdsOutputDevice
 {
     public const uint PC = 2;
 }
+
+#endregion Live View
+
+#region Focus Control
+
+public static class EdsCameraCommand
+{
+    public const uint DriveLensEvf = 0x00000103;
+    public const uint DoEvfAf = 0x00000102;
+    public const uint TakePicture = 0x00000000;
+}
+
+public static class EdsEvfDriveLens
+{
+    public const int Near1 = 0x00000001;
+    public const int Near2 = 0x00000002;
+    public const int Near3 = 0x00000003;
+
+    public const int Far1 = 0x00008001;
+    public const int Far2 = 0x00008002;
+    public const int Far3 = 0x00008003;
+}
+
+#endregion Focus Control

@@ -61,21 +61,28 @@ public static class EDSDK
         int param,
         int size,
         ref uint data
-    ); // liga o live view
+    ); // turn on live view
 
     [DllImport(DLL)]
-    public static extern EdsError EdsCreateMemoryStream(uint size, out IntPtr stream); // buffer da imagem
+    public static extern EdsError EdsCreateMemoryStream(uint size, out IntPtr stream); // image buffer
 
     [DllImport(DLL)]
-    public static extern EdsError EdsCreateEvfImageRef(IntPtr stream, out IntPtr evfImage); // referencia do frame
+    public static extern EdsError EdsCreateEvfImageRef(IntPtr stream, out IntPtr evfImage); // frame reference
 
     [DllImport(DLL)]
-    public static extern EdsError EdsDownloadEvfImage(IntPtr camera, IntPtr evfImage); // pega imagem da camera
+    public static extern EdsError EdsDownloadEvfImage(IntPtr camera, IntPtr evfImage); // get the camera image
 
     [DllImport(DLL)]
-    public static extern EdsError EdsGetPointer(IntPtr stream, out IntPtr pointer); // acesso ao buffer
+    public static extern EdsError EdsGetPointer(IntPtr stream, out IntPtr pointer); // buffer access
 
     [DllImport(DLL)]
-    public static extern EdsError EdsGetLength(IntPtr stream, out uint length); // tamanho do buffer
+    public static extern EdsError EdsGetLength(IntPtr stream, out uint length); // buffer size
     # endregion LiveView
+
+    #region Focus Control
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsSendCommand(IntPtr camera, uint command, int param);
+
+    #endregion Focus Control
 }

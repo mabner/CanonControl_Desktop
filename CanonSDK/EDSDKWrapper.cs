@@ -20,6 +20,8 @@ public class EDSDKWrapper
 {
     private IntPtr _camera;
 
+    #region Initialization and Camera Management
+
     public bool Initialize()
     {
         return EDSDK.EdsInitializeSDK() == EdsError.EDS_ERR_OK;
@@ -68,6 +70,10 @@ public class EDSDKWrapper
         EDSDK.EdsTerminateSDK();
     }
 
+    #endregion Initialization and Camera Management
+
+    #region Live View
+
     public bool StartLiveView()
     {
         uint device = EdsOutputDevice.PC;
@@ -78,7 +84,7 @@ public class EDSDKWrapper
             0,
             sizeof(uint),
             ref device
-        ); // direciona o live view do lcd para o pc
+        ); // directs live view output to the PC
 
         return err == EdsError.EDS_ERR_OK;
     }
@@ -99,7 +105,7 @@ public class EDSDKWrapper
             EDSDK.EdsRelease(evfImage);
             EDSDK.EdsRelease(stream);
 
-            // tratamento inteligente
+            // intelligent retry for device busy error
             if ((uint)err == 0x00000081) // DEVICE_BUSY
             {
                 Thread.Sleep(50);
@@ -119,6 +125,55 @@ public class EDSDKWrapper
         EDSDK.EdsRelease(evfImage);
         EDSDK.EdsRelease(stream);
 
-        return data;
+        return data; // return the JPEG data of the live view frame
+    }
+
+    #endregion Live Liew
+
+    #region Focus Control
+
+    public void FocusNear(int step)
+    {
+        SendCommand(EdsCameraCommand.DriveLensEvf, step);
+    }
+
+    public void FocusFar(int step)
+    {
+        SendCommand(EdsCameraCommand.DriveLensEvf, step);
+    }
+
+    public void AutoFocus()
+    {
+        SendCommand(EdsCameraCommand.DoEvfAf, 0);
+    }
+
+    public void TakePicture()
+    {
+        SendCommand(EdsCameraCommand.TakePicture, 0);
+    }
+
+    #endregion Focus Control
+
+    public EdsError SendCommand(uint command, int param)
+    {
+        const int maxRetries = 10;
+
+        for (int i = 0; i < maxRetries; i++)
+        {
+            var err = EDSDK.EdsSendCommand(_camera, command, param);
+
+            if (err == EdsError.EDS_ERR_OK)
+                return err;
+
+            if (err == EdsError.EDS_ERR_DEVICE_BUSY)
+            {
+                Thread.Sleep(100);
+                continue;
+            }
+
+            return err;
+        }
+
+        return EdsError.EDS_ERR_DEVICE_BUSY;
     }
 }
