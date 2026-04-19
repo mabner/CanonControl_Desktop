@@ -117,18 +117,73 @@ public partial class MainWindowViewModel : ViewModelBase
         CurrentSidePanelViewModel = new SettingsViewModel();
     }
 
-    // Control Panel Commands (placeholders for later implementation)
+    // Control Panel Commands
     [RelayCommand(CanExecute = nameof(IsCameraConnected))]
-    private void ToggleLiveView() { }
+    private async Task ToggleLiveView()
+    {
+        if (!IsLiveViewActive)
+        {
+            // Start live view
+            try
+            {
+                await _cameraService.StartLiveViewAsync(frameData =>
+                {
+                    // Convert byte[] to Bitmap and update LiveImage on UI thread
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    {
+                        try
+                        {
+                            using var stream = new System.IO.MemoryStream(frameData);
+                            LiveImage = new Bitmap(stream);
+                        }
+                        catch
+                        {
+                            // Silently handle bitmap creation errors
+                        }
+                    });
+                });
+
+                IsLiveViewActive = true;
+            }
+            catch
+            {
+                // Silently handle errors - keep toggle in current state
+                IsLiveViewActive = false;
+            }
+        }
+        else
+        {
+            // Stop live view
+            try
+            {
+                _cameraService.StopLiveView();
+                IsLiveViewActive = false;
+                LiveImage = null;
+            }
+            catch
+            {
+                // Silently handle errors - keep toggle in current state
+            }
+        }
+    }
 
     [RelayCommand(CanExecute = nameof(IsLiveViewActive))]
-    private void FocusNear() { }
+    private void FocusNear()
+    {
+        _cameraService.FocusNearMedium();
+    }
 
     [RelayCommand(CanExecute = nameof(IsLiveViewActive))]
-    private void FocusFar() { }
+    private void FocusFar()
+    {
+        _cameraService.FocusFarMedium();
+    }
 
     [RelayCommand(CanExecute = nameof(IsLiveViewActive))]
-    private void AutoFocus() { }
+    private void AutoFocus()
+    {
+        _cameraService.SetEvfAutoFocus(true);
+    }
 
     [RelayCommand(CanExecute = nameof(IsCameraConnected))]
     private void ContextCapture() { }
