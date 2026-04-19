@@ -20,19 +20,24 @@
 
     <StackPanel Margin="20" Spacing="10">
 
-        <TextBlock Text="{Binding Status}" FontSize="16"/>
+                <TextBlock Text="{Binding Status}" FontSize="16" />
 
         <Button Content="Connect Camera"
-                Command="{Binding ConnectCameraCommand}" />
-
-        <Button Content="Start Live View"
-                Command="{Binding StartLiveViewCommand}" />
-
-        <Image Source="{Binding LiveImage}" Height="200"/>
-
-        <Button Content="Stop Live View"
-                Command="{Binding StopLiveViewCommand}" />
-
+                        Command="{Binding ConnectCameraCommand}"
+                        IsEnabled="{Binding !IsCameraConnected}" />
+                <Button Content="Disconnect Camera"
+                        Command="{Binding DisconnectCameraCommand}"
+                        IsEnabled="{Binding IsCameraConnected}" />
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Ellipse Width="15" Height="15">
+                                <Ellipse.Fill>
+                                        <SolidColorBrush
+                                        Color="{Binding IsCameraConnected, Converter={StaticResource BoolToColorConverter}}" />
+                                </Ellipse.Fill>
+                        </Ellipse>
+                        <TextBlock Text="{Binding Status}" />
+                        <TextBlock Text="{Binding CameraName}" FontWeight="Bold" />
+                </StackPanel>
     </StackPanel>
 
 </Window>

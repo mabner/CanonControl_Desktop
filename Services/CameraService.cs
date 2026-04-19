@@ -31,6 +31,16 @@ public class CameraService
         return _sdk.ConnectFirstCamera();
     }
 
+    public void Disconnect()
+    {
+        StopLiveView();
+
+        if (_sdk != null)
+        {
+            _sdk.Close();
+        }
+    }
+
     public string GetCameraName()
     {
         return _sdk.GetCameraName();

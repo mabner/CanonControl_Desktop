@@ -9,36 +9,38 @@ namespace CanonControl.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    # region Properties
-
-    [ObservableProperty]
-    private string _status = "Camera not connected";
-
-    [ObservableProperty]
-    private Bitmap _liveImage;
-
-    [ObservableProperty]
-    private bool _isLiveViewRunning;
-
     private readonly CameraService _cameraService;
-
-    #endregion Properties
-
 
     public MainWindowViewModel()
     {
         _cameraService = new CameraService();
     }
 
+    [ObservableProperty]
+    private string _status = "Disconnected";
+
+    [ObservableProperty]
+    private bool _isCameraConnected;
+
+    [ObservableProperty]
+    private string _cameraName = string.Empty;
+
     [RelayCommand]
     private void ConnectCamera()
     {
         var result = _cameraService.Connect();
 
+        IsCameraConnected = result;
+
         if (result)
-            Status = $"Connected: {_cameraService.GetCameraName()}";
+        {
+            CameraName = _cameraService.GetCameraName();
+            Status = "Connected";
+        }
         else
+        {
             Status = "Failed to connect";
+    }
     }
 
     [RelayCommand]

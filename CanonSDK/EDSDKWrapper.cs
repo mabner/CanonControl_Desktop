@@ -62,6 +62,7 @@ public class EDSDKWrapper
         {
             EDSDK.EdsCloseSession(_camera);
             EDSDK.EdsRelease(_camera);
+            _camera = IntPtr.Zero;
         }
 
         EDSDK.EdsTerminateSDK();
