@@ -12,22 +12,37 @@
         WindowStartupLocation="CenterScreen"
         Title="CanonControl">
 
-    <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-        to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
-        <vm:MainWindowViewModel/>
-    </Design.DataContext>
+        <Design.DataContext>
+                <!-- This only sets the DataContext for the previewer in an IDE,
+                to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+                <vm:MainWindowViewModel/>
+        </Design.DataContext>
 
-    <StackPanel Margin="20" Spacing="10">
+        <StackPanel Margin="20" Spacing="10">
 
                 <TextBlock Text="{Binding Status}" FontSize="16" />
-
-        <Button Content="Connect Camera"
+                
+                <Button Content="Connect Camera"
                         Command="{Binding ConnectCameraCommand}"
                         IsEnabled="{Binding !IsCameraConnected}" />
                 <Button Content="Disconnect Camera"
                         Command="{Binding DisconnectCameraCommand}"
                         IsEnabled="{Binding IsCameraConnected}" />
+
+                <StackPanel Margin="20" Spacing="10">
+                        <Button Content="Live View"
+                                Command="{Binding OpenLiveViewCommand}"
+                                IsEnabled="{Binding IsCameraConnected}" />
+                        <Button Content="Focus Stack"
+                                Command="{Binding OpenFocusStackCommand}"
+                                IsEnabled="{Binding IsCameraConnected}" />
+                        <Button Content="Time Lapse"
+                                Command="{Binding OpenTimeLapseCommand}"
+                                IsEnabled="{Binding IsCameraConnected}" />
+                        <Button Content="Settings"
+                                Command="{Binding OpenSettingsCommand}" />
+                </StackPanel>
+
                 <StackPanel Orientation="Horizontal" Spacing="10">
                         <Ellipse Width="15" Height="15">
                                 <Ellipse.Fill>
@@ -38,6 +53,6 @@
                         <TextBlock Text="{Binding Status}" />
                         <TextBlock Text="{Binding CameraName}" FontWeight="Bold" />
                 </StackPanel>
-    </StackPanel>
+        </StackPanel>
 
 </Window>
