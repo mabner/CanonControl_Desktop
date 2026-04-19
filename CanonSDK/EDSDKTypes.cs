@@ -42,3 +42,13 @@ public struct EdsCameraRef
 {
     public IntPtr Ref;
 }
+
+public static class EdsPropertyID
+{
+    public const uint Evf_OutputDevice = 0x00000500;
+}
+
+public static class EdsOutputDevice
+{
+    public const uint PC = 2;
+}

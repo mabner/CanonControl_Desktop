@@ -34,8 +34,21 @@ public class CameraService
         return _sdk.GetCameraName();
     }
 
-    public void StartLiveView()
+    public async Task StartLiveViewAsync(Action<byte[]> onFrame)
     {
-        // TODO: implement live view functionality using the SDK
+        _sdk.StartLiveView();
+
+        await Task.Run(async () =>
+        {
+            while (true)
+            {
+                var frame = _sdk.GetLiveViewFrame();
+
+                if (frame != null)
+                    onFrame(frame);
+
+                await Task.Delay(30); //30 FPS
+            }
+        });
     }
 }

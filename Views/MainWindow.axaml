@@ -28,6 +28,8 @@
         <Button Content="Start Live View"
                 Command="{Binding StartLiveViewCommand}" />
 
+        <Image Source="{Binding LiveImage}" Height="200"/>
+
     </StackPanel>
 
 </Window>

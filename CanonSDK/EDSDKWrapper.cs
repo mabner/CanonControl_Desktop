@@ -64,4 +64,46 @@ public class EDSDKWrapper
 
         EDSDK.EdsTerminateSDK();
     }
+
+    public bool StartLiveView()
+    {
+        uint device = EdsOutputDevice.PC;
+
+        var err = EDSDK.EdsSetPropertyData(
+            _camera,
+            EdsPropertyID.Evf_OutputDevice,
+            0,
+            sizeof(uint),
+            ref device
+        ); // direciona o live view do lcd para o pc
+
+        return err == EdsError.EDS_ERR_OK;
+    }
+
+    public byte[] GetLiveViewFrame()
+    {
+        IntPtr stream;
+        IntPtr evfImage;
+
+        EDSDK.EdsCreateMemoryStream(0, out stream);
+
+        EDSDK.EdsCreateEvfImageRef(stream, out evfImage);
+
+        var err = EDSDK.EdsDownloadEvfImage(_camera, evfImage);
+
+        if (err != EdsError.EDS_ERR_OK)
+            return null;
+
+        EDSDK.EdsGetPointer(stream, out var pointer);
+
+        EDSDK.EdsGetLength(stream, out var length);
+
+        byte[] data = new byte[length];
+        System.Runtime.InteropServices.Marshal.Copy(pointer, data, 0, (int)length);
+
+        EDSDK.EdsRelease(evfImage);
+        EDSDK.EdsRelease(stream);
+
+        return data;
+    }
 }

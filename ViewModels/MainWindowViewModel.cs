@@ -1,4 +1,7 @@
-﻿using CanonControl.Services;
+﻿using System.IO;
+using System.Threading.Tasks;
+using Avalonia.Media.Imaging;
+using CanonControl.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -8,6 +11,9 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     [ObservableProperty]
     private string _status = "Camera not connected";
+
+    [ObservableProperty]
+    private Bitmap _liveImage;
 
     private readonly CameraService _cameraService;
 
@@ -28,9 +34,14 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void StartLiveView()
+    private async Task StartLiveView()
     {
-        _cameraService.StartLiveView();
-        Status = "Live View started";
+        await _cameraService.StartLiveViewAsync(
+            (frame) =>
+            {
+                using var ms = new MemoryStream(frame);
+                LiveImage = new Bitmap(ms);
+            }
+        );
     }
 }

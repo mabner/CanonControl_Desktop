@@ -23,6 +23,7 @@ public static class EDSDK
     private const string DLL = "EDSDK";
 #endif
 
+    # region Initialization and Camera Management
     [DllImport(DLL)]
     public static extern EdsError EdsInitializeSDK();
 
@@ -49,4 +50,32 @@ public static class EDSDK
 
     [DllImport(DLL)]
     public static extern EdsError EdsRelease(IntPtr obj);
+
+    # endregion# Initialization and Camera Management
+
+    # region LiveView
+    [DllImport(DLL)]
+    public static extern EdsError EdsSetPropertyData(
+        IntPtr camera,
+        uint propertyID,
+        int param,
+        int size,
+        ref uint data
+    ); // liga o live view
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsCreateMemoryStream(uint size, out IntPtr stream); // buffer da imagem
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsCreateEvfImageRef(IntPtr stream, out IntPtr evfImage); // referencia do frame
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsDownloadEvfImage(IntPtr camera, IntPtr evfImage); // pega imagem da camera
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsGetPointer(IntPtr stream, out IntPtr pointer); // acesso ao buffer
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsGetLength(IntPtr stream, out uint length); // tamanho do buffer
+    # endregion LiveView
 }
