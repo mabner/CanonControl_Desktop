@@ -4,9 +4,9 @@ using Avalonia.Markup.Xaml;
 
 namespace CanonControl.Views;
 
-public partial class TimeLapseWindow : Window
+public partial class TimeLapseView : UserControl
 {
-    public TimeLapseWindow()
+    public TimeLapseView()
     {
         InitializeComponent();
     }

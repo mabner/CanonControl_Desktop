@@ -254,17 +254,17 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void OpenFocusStack()
     {
-        var window = new FocusStackWindow { DataContext = new FocusStackViewModel(_cameraService) };
+        var window = new FocusStackView { DataContext = new FocusStackViewModel(_cameraService) };
 
-        window.Show();
+        //window.Show();
     }
 
     [RelayCommand]
     private void OpenTimeLapse()
     {
-        var window = new TimeLapseWindow { DataContext = new TimeLapseViewModel(_cameraService) };
+        var window = new TimeLapseView { DataContext = new TimeLapseViewModel(_cameraService) };
 
-        window.Show();
+        //window.Show();
     }
 
     [RelayCommand]

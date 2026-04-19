@@ -1,0 +1,60 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:vm="using:CanonControl.ViewModels"
+        x:Class="CanonControl.Views.TimeLapseView"
+        x:DataType="vm:TimeLapseViewModel">
+
+  <StackPanel Spacing="16" Margin="16">
+
+    <!-- Interval Seconds -->
+    <StackPanel Spacing="8">
+      <TextBlock Text="Interval (seconds)" FontSize="16" />
+      <NumericUpDown Value="{Binding IntervalSeconds}"
+                     Minimum="1"
+                     Maximum="3600"
+                     Increment="1"
+                     MinHeight="44"
+                     IsEnabled="{Binding !IsRunning}" />
+    </StackPanel>
+
+    <!-- Number of Shots -->
+    <StackPanel Spacing="8">
+      <TextBlock Text="Number of Shots" FontSize="16" />
+      <NumericUpDown Value="{Binding NumberOfShots}"
+                     Minimum="1"
+                     Maximum="10000"
+                     Increment="1"
+                     MinHeight="44"
+                     IsEnabled="{Binding !IsRunning}" />
+    </StackPanel>
+
+    <!-- Status Indicator -->
+    <StackPanel Spacing="8">
+      <TextBlock Text="Status" FontSize="16" />
+      <Border Background="{DynamicResource SystemAccentColor}"
+              CornerRadius="4"
+              Padding="12"
+              MinHeight="44"
+              IsVisible="{Binding IsRunning}">
+        <TextBlock Text="Time Lapse Running..."
+                   FontSize="14"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" />
+      </Border>
+      <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+              CornerRadius="4"
+              Padding="12"
+              MinHeight="44"
+              IsVisible="{Binding !IsRunning}">
+        <TextBlock Text="Ready"
+                   FontSize="14"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center" />
+      </Border>
+    </StackPanel>
+
+  </StackPanel>
+</UserControl>
