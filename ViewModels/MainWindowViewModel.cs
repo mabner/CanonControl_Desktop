@@ -30,9 +30,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // navigation state
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ContextCaptureLabel))]
     private NavigationContext _currentContext = NavigationContext.RemoteCapture;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ContextCaptureLabel))]
     private ViewModelBase? _currentSidePanelViewModel;
 
     // camera state
@@ -104,29 +106,76 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void NavigateToRemoteCapture()
     {
+        UnsubscribeFromCurrentViewModel();
         CurrentContext = NavigationContext.RemoteCapture;
         CurrentSidePanelViewModel = new RemoteCaptureViewModel(_cameraService);
+        SubscribeToCurrentViewModel();
     }
 
     [RelayCommand]
     private void NavigateToFocusStack()
     {
+        UnsubscribeFromCurrentViewModel();
         CurrentContext = NavigationContext.FocusStack;
         CurrentSidePanelViewModel = new FocusStackViewModel(_cameraService);
+        SubscribeToCurrentViewModel();
     }
 
     [RelayCommand]
     private void NavigateToTimeLapse()
     {
+        UnsubscribeFromCurrentViewModel();
         CurrentContext = NavigationContext.TimeLapse;
         CurrentSidePanelViewModel = new TimeLapseViewModel(_cameraService);
+        SubscribeToCurrentViewModel();
     }
 
     [RelayCommand]
     private void NavigateToSettings()
     {
+        UnsubscribeFromCurrentViewModel();
         CurrentContext = NavigationContext.Settings;
         CurrentSidePanelViewModel = new SettingsViewModel();
+        SubscribeToCurrentViewModel();
+    }
+
+    // subscribe to IsRunning property changes in feature ViewModels
+    private void SubscribeToCurrentViewModel()
+    {
+        if (CurrentSidePanelViewModel is FocusStackViewModel fsvm)
+        {
+            fsvm.PropertyChanged += OnFeatureViewModelPropertyChanged;
+        }
+        else if (CurrentSidePanelViewModel is TimeLapseViewModel tlvm)
+        {
+            tlvm.PropertyChanged += OnFeatureViewModelPropertyChanged;
+        }
+    }
+
+    private void UnsubscribeFromCurrentViewModel()
+    {
+        if (CurrentSidePanelViewModel is FocusStackViewModel fsvm)
+        {
+            fsvm.PropertyChanged -= OnFeatureViewModelPropertyChanged;
+        }
+        else if (CurrentSidePanelViewModel is TimeLapseViewModel tlvm)
+        {
+            tlvm.PropertyChanged -= OnFeatureViewModelPropertyChanged;
+        }
+    }
+
+    private void OnFeatureViewModelPropertyChanged(
+        object? sender,
+        System.ComponentModel.PropertyChangedEventArgs e
+    )
+    {
+        if (
+            e.PropertyName == nameof(FocusStackViewModel.IsRunning)
+            || e.PropertyName == nameof(TimeLapseViewModel.IsRunning)
+        )
+        {
+            OnPropertyChanged(nameof(ContextCaptureLabel));
+        }
     }
 
     private void LoadSettings()
@@ -238,8 +287,74 @@ public partial class MainWindowViewModel : ViewModelBase
         _cameraService.StopAutoFocus();
     }
 
+    // computed property for context-aware capture button label
+    public string ContextCaptureLabel
+    {
+        get
+        {
+            return CurrentContext switch
+            {
+                NavigationContext.RemoteCapture => "Capture",
+                NavigationContext.FocusStack => IsStackRunning ? "Stop Stack" : "Start Stack",
+                NavigationContext.TimeLapse => IsLapseRunning ? "Stop Lapse" : "Start Lapse",
+                NavigationContext.Settings => "Capture",
+                _ => "Capture",
+            };
+        }
+    }
+
+    // helper properties to track running state of feature ViewModels
+    private bool IsStackRunning =>
+        CurrentSidePanelViewModel is FocusStackViewModel fsvm && fsvm.IsRunning;
+    private bool IsLapseRunning =>
+        CurrentSidePanelViewModel is TimeLapseViewModel tlvm && tlvm.IsRunning;
+
     [RelayCommand(CanExecute = nameof(IsCameraConnected))]
-    private void ContextCapture() { }
+    private async Task ContextCapture()
+    {
+        // delegate to appropriate method based on CurrentContext
+        switch (CurrentContext)
+        {
+            case NavigationContext.RemoteCapture:
+                if (CurrentSidePanelViewModel is RemoteCaptureViewModel rcvm)
+                {
+                    await rcvm.TakeSinglePicture();
+                }
+                break;
+
+            case NavigationContext.FocusStack:
+                if (CurrentSidePanelViewModel is FocusStackViewModel fsvm)
+                {
+                    if (fsvm.IsRunning)
+                    {
+                        fsvm.StopStack();
+                    }
+                    else
+                    {
+                        await fsvm.StartStack();
+                    }
+                }
+                break;
+
+            case NavigationContext.TimeLapse:
+                if (CurrentSidePanelViewModel is TimeLapseViewModel tlvm)
+                {
+                    if (tlvm.IsRunning)
+                    {
+                        tlvm.StopLapse();
+                    }
+                    else
+                    {
+                        await tlvm.StartLapse();
+                    }
+                }
+                break;
+
+            case NavigationContext.Settings:
+                // fallback: do nothing or take a single picture
+                break;
+        }
+    }
 
     // legacy window-opening commands (to be deprecated)
     [RelayCommand]
