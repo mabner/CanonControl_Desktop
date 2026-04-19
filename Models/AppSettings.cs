@@ -14,4 +14,6 @@ public class AppSettings
     public int LiveViewFrameRate { get; set; } = 30; // default to 30 FPS
 
     public bool LiveViewDuringAutoFocus { get; set; } = true;
+
+    public int ConnectionTimeout { get; set; } = 10;
 }

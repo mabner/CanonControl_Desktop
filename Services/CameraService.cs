@@ -27,16 +27,16 @@ public class CameraService
 
     #region Connect and Startup
 
-    public async Task<bool> ConnectAsync()
+    public async Task<bool> ConnectAsync(int timeoutSeconds = 10)
     {
         NativeLibraryLoader.LoadEDSDK();
 
         if (!_sdk.Initialize())
             return false;
 
-        // poll for camera connection with timeout
-        const int maxAttempts = 20; // 10 seconds total (20 * 500ms)
+        // poll for camera connection with configurable timeout
         const int delayMs = 500;
+        int maxAttempts = (timeoutSeconds * 1000) / delayMs; // convert seconds to attempts
 
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {

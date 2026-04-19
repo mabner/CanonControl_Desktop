@@ -68,7 +68,11 @@ public partial class MainWindowViewModel : ViewModelBase
     private async Task ConnectCamera()
     {
         Status = "Connecting...";
-        var result = await _cameraService.ConnectAsync();
+        // load current settings to get connection timeout
+        var settings = _settingsService.Load();
+
+        var result = await _cameraService.ConnectAsync(settings.ConnectionTimeout);
+
         IsCameraConnected = result;
 
         if (result)

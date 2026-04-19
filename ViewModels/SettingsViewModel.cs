@@ -24,6 +24,7 @@ public partial class SettingsViewModel : ViewModelBase
         _autoDownload = _settings.AutoDownload;
         _liveViewFrameRate = _settings.LiveViewFrameRate;
         _liveViewDuringAutoFocus = _settings.LiveViewDuringAutoFocus;
+        _connectionTimeout = _settings.ConnectionTimeout;
     }
 
     [ObservableProperty]
@@ -38,11 +39,17 @@ public partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private bool _liveViewDuringAutoFocus = true;
 
+    [ObservableProperty]
+    private int _connectionTimeout = 10;
+
     // display the settings file path for user reference
     public string SettingsFilePath => _settingsService.GetSettingsPath();
 
     // available frame rate options
     public List<int> FrameRateOptions { get; } = new() { 15, 20, 30 };
+
+    // available connection timeout options (in seconds)
+    public List<int> ConnectionTimeoutOptions { get; } = new() { 5, 10, 15, 20, 30 };
 
     [RelayCommand]
     private async Task BrowseSavePath()
@@ -89,6 +96,7 @@ public partial class SettingsViewModel : ViewModelBase
         _settings.AutoDownload = AutoDownload;
         _settings.LiveViewFrameRate = LiveViewFrameRate;
         _settings.LiveViewDuringAutoFocus = LiveViewDuringAutoFocus;
+        _settings.ConnectionTimeout = ConnectionTimeout;
 
         // persist to file
         _settingsService.Save(_settings);
