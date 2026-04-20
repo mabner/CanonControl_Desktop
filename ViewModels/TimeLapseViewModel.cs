@@ -22,6 +22,12 @@ public partial class TimeLapseViewModel : ViewModelBase
     [ObservableProperty]
     private bool _isRunning;
 
+    [ObservableProperty]
+    private int _currentShot;
+
+    [ObservableProperty]
+    private string _status = "Ready";
+
     public TimeLapseViewModel(CameraService cameraService)
     {
         _cameraService = cameraService;
@@ -33,25 +39,37 @@ public partial class TimeLapseViewModel : ViewModelBase
             return;
 
         IsRunning = true;
+        CurrentShot = 0;
+        Status = "Running...";
         _cancellationTokenSource = new CancellationTokenSource();
         var token = _cancellationTokenSource.Token;
 
         try
         {
-            for (int i = 0; i < NumberOfShots && !token.IsCancellationRequested; i++)
+            for (int i = 1; i <= NumberOfShots && !token.IsCancellationRequested; i++)
             {
-                // TODO: Implement actual picture capture via CameraService
-                // await _cameraService.TakePictureAsync();
+                CurrentShot = i;
+                Status = $"Shot {i} of {NumberOfShots}";
 
-                if (i < NumberOfShots - 1)
+                // Take picture
+                await Task.Run(() => _cameraService.TakePicture(), token);
+
+                // Wait for interval (except after last shot)
+                if (i < NumberOfShots && !token.IsCancellationRequested)
                 {
                     await Task.Delay(TimeSpan.FromSeconds(IntervalSeconds), token);
                 }
             }
+
+            Status = token.IsCancellationRequested ? "Stopped" : "Completed";
         }
         catch (OperationCanceledException)
         {
-            // expected when StopLapse is called
+            Status = "Stopped";
+        }
+        catch (Exception ex)
+        {
+            Status = $"Error: {ex.Message}";
         }
         finally
         {

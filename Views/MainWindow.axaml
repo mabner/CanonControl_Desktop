@@ -20,90 +20,143 @@
 
         <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="3*,2*">
                 <!-- Navigation Bar (Row 0, ColumnSpan 2) -->
-                <Grid Grid.Row="0" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto">
-                        <!-- Navigation buttons -->
+                <Grid Grid.Row="0" Grid.ColumnSpan="2" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto">
+                        <!-- Navigation buttons with smaller font and text wrapping -->
                         <Button Grid.Column="0"
-                                Content="Remote Capture"
-                                MinWidth="100" MinHeight="50" Margin="4"
+                                MinWidth="90" MinHeight="50" Margin="4"
                                 Command="{Binding NavigateToRemoteCaptureCommand}"
                                 IsEnabled="{Binding IsCameraConnected}"
-                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=RemoteCapture}" />
-
+                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=RemoteCapture}">
+                                <TextBlock Text="Remote&#x0a;Capture"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14" />
+                        </Button>
                         <Button Grid.Column="1"
-                                Content="Focus Stack"
-                                MinWidth="100" MinHeight="50" Margin="4"
+                                MinWidth="90" MinHeight="50" Margin="4"
                                 Command="{Binding NavigateToFocusStackCommand}"
                                 IsEnabled="{Binding IsCameraConnected}"
-                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=FocusStack}" />
-
+                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=FocusStack}">
+                                <TextBlock Text="Focus&#x0a;Stack"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14" />
+                        </Button>
                         <Button Grid.Column="2"
-                                Content="Time Lapse"
-                                MinWidth="100" MinHeight="50" Margin="4"
+                                MinWidth="90" MinHeight="50" Margin="4"
+                                Command="{Binding NavigateToExposureBracketingCommand}"
+                                IsEnabled="{Binding IsCameraConnected}"
+                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=ExposureBracketing}">
+                                <TextBlock Text="Exposure&#x0a;Bracketing"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14" />
+                        </Button>
+                        <Button Grid.Column="3"
+                                MinWidth="90" MinHeight="50" Margin="4"
                                 Command="{Binding NavigateToTimeLapseCommand}"
                                 IsEnabled="{Binding IsCameraConnected}"
-                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=TimeLapse}" />
-
-                        <Button Grid.Column="3"
-                                Content="Settings"
-                                MinWidth="100" MinHeight="50" Margin="4"
+                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=TimeLapse}">
+                                <TextBlock Text="Time&#x0a;Lapse"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14" />
+                        </Button>
+                        <Button Grid.Column="4"
+                                MinWidth="90" MinHeight="50" Margin="4"
                                 Command="{Binding NavigateToSettingsCommand}"
-                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Settings}" />
+                                Classes.accent="{Binding CurrentContext, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Settings}">
+                                <TextBlock Text="Settings"
+                                           TextAlignment="Center"
+                                           FontSize="14" />
+                        </Button>
 
-                        <!-- Column 4 is the spacer (*) -->
+                        <!-- Column 5 is the spacer (*) -->
 
                         <!-- Connection buttons -->
-                        <Button Grid.Column="5"
-                                Content="Connect"
-                                MinWidth="100" MinHeight="50" Margin="4"
-                                Command="{Binding ConnectCameraCommand}"
-                                IsEnabled="{Binding !IsCameraConnected}" />
-
                         <Button Grid.Column="6"
-                                Content="Disconnect"
-                                MinWidth="100" MinHeight="50" Margin="4"
+                                MinWidth="90" MinHeight="50" Margin="4"
+                                Command="{Binding ConnectCameraCommand}"
+                                IsEnabled="{Binding !IsCameraConnected}">
+                                <TextBlock Text="Connect"
+                                           TextAlignment="Center"
+                                           FontSize="14" />
+                        </Button>
+                        <Button Grid.Column="7"
+                                MinWidth="90" MinHeight="50" Margin="4"
                                 Command="{Binding DisconnectCameraCommand}"
-                                IsEnabled="{Binding IsCameraConnected}" />
+                                IsEnabled="{Binding IsCameraConnected}">
+                                <TextBlock Text="Disconnect"
+                                           TextAlignment="Center"
+                                           FontSize="14" />
+                        </Button>
                 </Grid>
 
                 <!-- Live View Area (Row 1, Column 0) -->
-                <Grid Grid.Row="1" Grid.Column="0" Background="Black">
-                        <Image Source="{Binding LiveImage}"
-                               Stretch="Uniform"
-                               RenderOptions.BitmapInterpolationMode="LowQuality" />
+                <Viewbox Grid.Row="1" Grid.Column="0" Stretch="Uniform">
+                        <Grid Width="600" Height="400" Background="Black">
+                                <Image Source="{Binding LiveImage}"
+                                       Stretch="UniformToFill"
+                                       RenderOptions.BitmapInterpolationMode="LowQuality" />
 
-                        <!-- Histogram Overlay -->
-                        <views:HistogramControl Histogram="{Binding HistogramData}"
-                                                DisplayMode="{Binding HistogramDisplayMode}"
-                                                Width="200" Height="100"
-                                                HorizontalAlignment="Right"
-                                                VerticalAlignment="Top"
-                                                Margin="8"
-                                                IsVisible="{Binding HistogramDisplayMode, Converter={StaticResource EnumNotEqualConverter}, ConverterParameter=None}" />
-                </Grid>
+                                <!-- Composition Aid Overlay -->
+                                <views:CompositionAidControl CompositionMode="{Binding CompositionAidMode}"
+                                                             IsMirrored="{Binding IsCompositionMirrored}"
+                                                             Rotation="{Binding CompositionRotation}"
+                                                             HorizontalAlignment="Stretch"
+                                                             VerticalAlignment="Stretch"
+                                                             IsVisible="{Binding CompositionAidMode, Converter={StaticResource EnumNotEqualConverter}, ConverterParameter=None}" />
+
+                                <!-- Histogram Overlay -->
+                                <views:HistogramControl Histogram="{Binding HistogramData}"
+                                                        DisplayMode="{Binding HistogramDisplayMode}"
+                                                        Width="200" Height="100"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Top"
+                                                        Margin="8"
+                                                        IsVisible="{Binding HistogramDisplayMode, Converter={StaticResource EnumNotEqualConverter}, ConverterParameter=None}" />
+                        </Grid>
+                </Viewbox>
 
                 <!-- Control Panel (Row 2, Column 0) -->
                 <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Margin="4">
-                        <Button Content="Live View"
-                                Width="80" Height="50" Margin="4"
+                        <Button MinWidth="80" MinHeight="50" Margin="4"
                                 Command="{Binding ToggleLiveViewCommand}"
-                                IsEnabled="{Binding IsCameraConnected}" />
-
+                                IsEnabled="{Binding IsCameraConnected}">
+                                <TextBlock Text="Live&#x0a;View"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14" />
+                        </Button>
                         <Button x:Name="FocusNearButton"
-                                Content="Focus Near"
-                                Width="80" Height="50" Margin="4" />
-
+                                MinWidth="80" MinHeight="50" Margin="4">
+                                <TextBlock Text="Focus&#x0a;Near"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14" />
+                        </Button>
                         <Button x:Name="FocusFarButton"
-                                Content="Focus Far"
-                                Width="80" Height="50" Margin="4" />
-
+                                MinWidth="80" MinHeight="50" Margin="4">
+                                <TextBlock Text="Focus&#x0a;Far"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14" />
+                        </Button>
                         <Button x:Name="AutoFocusButton"
-                                Content="Auto Focus"
-                                Width="80" Height="50" Margin="4" />
-
-                        <Button Content="{Binding ContextCaptureLabel}"
-                                Width="120" Height="50" Margin="4"
+                                MinWidth="80" MinHeight="50" Margin="4">
+                                <TextBlock Text="Auto&#x0a;Focus"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14" />
+                        </Button>
+                        <Button MinWidth="90" MinHeight="50" Margin="4"
                                 Command="{Binding ContextCaptureCommand}"
-                                IsEnabled="{Binding IsCameraConnected}" />
+                                IsEnabled="{Binding IsCameraConnected}">
+                                <TextBlock Text="{Binding ContextCaptureLabel}"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14" />
+                        </Button>
                 </StackPanel>
 
                 <!-- Side Panel (Row 1, Column 1) -->
@@ -112,5 +165,4 @@
                         <ContentControl Content="{Binding CurrentSidePanelViewModel}" />
                 </ScrollViewer>
         </Grid>
-
 </Window>

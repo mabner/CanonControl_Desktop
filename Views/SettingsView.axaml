@@ -12,7 +12,7 @@
                 <Grid ColumnDefinitions="*,Auto">
                         <TextBox Grid.Column="0"
                                  Text="{Binding SavePath}"
-                                 Watermark="Enter save path..."
+                                 PlaceholderText="Enter save path..."
                                  MinHeight="44" />
                         <Button Grid.Column="1"
                                 Content="Browse"

@@ -34,6 +34,20 @@ public struct EdsDeviceInfo
     public uint reserved;
 }
 
+[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+public struct EdsDirectoryItemInfo
+{
+    public ulong Size;
+
+    [MarshalAs(UnmanagedType.Bool)]
+    public bool isFolder;
+    public uint groupID;
+    public uint option;
+
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+    public string szFileName;
+}
+
 public struct EdsBaseRef
 {
     public IntPtr Ref;
@@ -116,7 +130,7 @@ public static class EdsEvfAf
     public const int CameraCommand_EvfAf_OFF = 0;
     public const int CameraCommand_EvfAf_ON = 1;
 
-    // Backward-compatible aliases
+    // backward-compatible aliases
     public const int ON = 1;
     public const int OFF = 0;
 }
@@ -129,3 +143,28 @@ public static class EdsEvfHistogramStatus
 }
 
 #endregion Focus Control
+
+#region Event Types
+
+public static class EdsObjectEvent
+{
+    public const uint DirItemRequestTransfer = 0x00000202;
+}
+
+public static class EdsFileCreateDisposition
+{
+    public const uint CreateNew = 1;
+    public const uint CreateAlways = 2;
+    public const uint OpenExisting = 3;
+    public const uint OpenAlways = 4;
+    public const uint TruncateExisting = 5;
+}
+
+public static class EdsAccess
+{
+    public const uint Read = 1;
+    public const uint Write = 2;
+    public const uint ReadWrite = 3;
+}
+
+#endregion Event Types

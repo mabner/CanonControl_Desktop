@@ -1,60 +1,79 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        xmlns:vm="using:CanonControl.ViewModels"
-        x:Class="CanonControl.Views.TimeLapseView"
-        x:DataType="vm:TimeLapseViewModel">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="using:CanonControl.ViewModels"
+             x:Class="CanonControl.Views.TimeLapseView"
+             x:DataType="vm:TimeLapseViewModel">
 
   <StackPanel Spacing="16" Margin="16">
+    <TextBlock Text="Time Lapse"
+               FontSize="20"
+               FontWeight="Bold"
+               Margin="0,0,0,8" />
 
     <!-- Interval Seconds -->
     <StackPanel Spacing="8">
-      <TextBlock Text="Interval (seconds)" FontSize="16" />
+      <TextBlock Text="Interval (seconds):" FontSize="16" />
       <NumericUpDown Value="{Binding IntervalSeconds}"
                      Minimum="1"
                      Maximum="3600"
                      Increment="1"
                      MinHeight="44"
                      IsEnabled="{Binding !IsRunning}" />
+      <TextBlock Text="Time between shots"
+                 FontSize="12"
+                 Foreground="Gray" />
     </StackPanel>
 
     <!-- Number of Shots -->
     <StackPanel Spacing="8">
-      <TextBlock Text="Number of Shots" FontSize="16" />
+      <TextBlock Text="Number of Shots:" FontSize="16" />
       <NumericUpDown Value="{Binding NumberOfShots}"
                      Minimum="1"
                      Maximum="10000"
                      Increment="1"
                      MinHeight="44"
                      IsEnabled="{Binding !IsRunning}" />
+      <TextBlock Text="Total number of images to capture"
+                 FontSize="12"
+                 Foreground="Gray" />
     </StackPanel>
 
-    <!-- Status Indicator -->
+    <!-- Status -->
     <StackPanel Spacing="8">
-      <TextBlock Text="Status" FontSize="16" />
-      <Border Background="{DynamicResource SystemAccentColor}"
-              CornerRadius="4"
-              Padding="12"
-              MinHeight="44"
-              IsVisible="{Binding IsRunning}">
-        <TextBlock Text="Time Lapse Running..."
-                   FontSize="14"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center" />
-      </Border>
-      <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-              CornerRadius="4"
-              Padding="12"
-              MinHeight="44"
-              IsVisible="{Binding !IsRunning}">
-        <TextBlock Text="Ready"
-                   FontSize="14"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center" />
-      </Border>
+      <TextBlock Text="Status:" FontSize="16" />
+      <TextBlock Text="{Binding Status}"
+                 FontSize="14"
+                 Foreground="{Binding IsRunning, Converter={StaticResource BoolToColorConverter}}" />
+      <TextBlock Text="{Binding CurrentShot, StringFormat='Current Shot: {0}'}"
+                 FontSize="14"
+                 IsVisible="{Binding IsRunning}" />
     </StackPanel>
 
+    <!-- Info -->
+    <Border Background="#F0F0F0"
+            Padding="12"
+            CornerRadius="4"
+            Margin="0,8,0,0">
+      <StackPanel Spacing="4">
+        <TextBlock Text="How it works:"
+                   FontWeight="Bold"
+                   FontSize="14" />
+        <TextBlock Text="• Takes photos at regular intervals"
+                   FontSize="12"
+                   TextWrapping="Wrap" />
+        <TextBlock Text="• Captures changes over time"
+                   FontSize="12"
+                   TextWrapping="Wrap" />
+        <TextBlock Text="• Combine images into video for time-lapse effect"
+                   FontSize="12"
+                   TextWrapping="Wrap" />
+        <TextBlock Text="• Useful for sunsets, clouds, construction, plants"
+                   FontSize="12"
+                   TextWrapping="Wrap" />
+      </StackPanel>
+    </Border>
   </StackPanel>
 </UserControl>

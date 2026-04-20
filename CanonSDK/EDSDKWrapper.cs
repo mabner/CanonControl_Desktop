@@ -21,6 +21,10 @@ public class EDSDKWrapper
 {
     private IntPtr _camera;
 
+    private EDSDK.EdsObjectEventHandler? _objectEventHandler;
+
+    public string SavePath { get; set; } = string.Empty;
+
     #region Initialization and Camera Management
 
     public bool Initialize()
@@ -55,6 +59,10 @@ public class EDSDKWrapper
 
             if (EDSDK.EdsOpenSession(_camera) != EdsError.EDS_ERR_OK)
                 return false;
+
+            // register object event handler for image download
+            _objectEventHandler = OnObjectEvent;
+            EDSDK.EdsSetObjectEventHandler(_camera, 0xFFFFFFFF, _objectEventHandler, IntPtr.Zero);
 
             return true;
         }
@@ -177,13 +185,13 @@ public class EDSDKWrapper
         IntPtr stream;
         IntPtr evfImage;
 
-        // cria buffer
+        // create buffer stream
         EDSDK.EdsCreateMemoryStream(0, out stream);
 
-        // cria referência do frame
+        // create frame reference
         EDSDK.EdsCreateEvfImageRef(stream, out evfImage);
 
-        // baixa imagem da câmera
+        // download live view frame to get histogram data
         var err = EDSDK.EdsDownloadEvfImage(_camera, evfImage);
 
         if (err != EdsError.EDS_ERR_OK)
@@ -195,7 +203,7 @@ public class EDSDKWrapper
 
         var histogram = new HistogramData();
 
-        // Get histogram status
+        // get histogram status
         uint status = 0;
         if (
             EDSDK.EdsGetPropertyData(
@@ -210,10 +218,10 @@ public class EDSDKWrapper
             histogram.Status = (int)status;
         }
 
-        // Get histogram data if visible
+        // get histogram data if visible
         if (histogram.Status == 1) // Normal
         {
-            // Get Y (Luminance) histogram
+            // get Y (Luminance) histogram
             EDSDK.EdsGetPropertyData(
                 evfImage,
                 EdsPropertyID.Evf_HistogramY,
@@ -222,7 +230,7 @@ public class EDSDKWrapper
                 histogram.Luminance
             );
 
-            // Get RGB histograms
+            // get RGB histograms
             EDSDK.EdsGetPropertyData(
                 evfImage,
                 EdsPropertyID.Evf_HistogramR,
@@ -246,7 +254,7 @@ public class EDSDKWrapper
             );
         }
 
-        // liberar memória
+        // release resources
         EDSDK.EdsRelease(evfImage);
         EDSDK.EdsRelease(stream);
 
@@ -326,7 +334,7 @@ public class EDSDKWrapper
     private string ConvertTvToString(uint tv)
     {
         // Canon Tv (Time Value) to shutter speed string
-        // Based on Canon EDSDK documentation
+        // based on Canon EDSDK documentation
         return tv switch
         {
             0x0C => "Bulb",
@@ -410,7 +418,7 @@ public class EDSDKWrapper
     private string ConvertAvToString(uint av)
     {
         // Canon Av (Aperture Value) to f-stop string
-        // Based on Canon EDSDK documentation
+        // based on Canon EDSDK documentation
         return av switch
         {
             0x08 => "f/1.0",
@@ -473,7 +481,7 @@ public class EDSDKWrapper
     private string ConvertIsoToString(uint iso)
     {
         // Canon ISO values to ISO string
-        // Based on Canon EDSDK documentation
+        // based on Canon EDSDK documentation
         return iso switch
         {
             0x00 => "Auto",
@@ -559,16 +567,16 @@ public class EDSDKWrapper
         )
             return false;
 
-        // Find current value index
+        // find current value index
         int currentIndex = Array.IndexOf(availableValues, currentValue);
         if (currentIndex == -1)
         {
-            // Current value not in list, return first available
+            // current value not in list, return first available
             nextValue = availableValues[0];
             return true;
         }
 
-        // Get next value (wrap around to start)
+        // get next value (wrap around to start)
         int nextIndex = (currentIndex + 1) % availableValues.Length;
         nextValue = availableValues[nextIndex];
         return true;
@@ -587,16 +595,16 @@ public class EDSDKWrapper
         )
             return false;
 
-        // Find current value index
+        // find current value index
         int currentIndex = Array.IndexOf(availableValues, currentValue);
         if (currentIndex == -1)
         {
-            // Current value not in list, return last available
+            // current value not in list, return last available
             prevValue = availableValues[^1];
             return true;
         }
 
-        // Get previous value (wrap around to end)
+        // get previous value (wrap around to end)
         int prevIndex = currentIndex == 0 ? availableValues.Length - 1 : currentIndex - 1;
         prevValue = availableValues[prevIndex];
         return true;
@@ -654,4 +662,93 @@ public class EDSDKWrapper
 
         return EdsError.EDS_ERR_DEVICE_BUSY;
     }
+
+    #region Event Handlers and Download
+
+    private uint OnObjectEvent(uint inEvent, IntPtr inRef, IntPtr inContext)
+    {
+        if (inEvent == EdsObjectEvent.DirItemRequestTransfer)
+        {
+            DownloadImage(inRef);
+        }
+        else if (inRef != IntPtr.Zero)
+        {
+            EDSDK.EdsRelease(inRef);
+        }
+        return (uint)EdsError.EDS_ERR_OK;
+    }
+
+    private void DownloadImage(IntPtr directoryItem)
+    {
+        try
+        {
+            // get file info
+            var err = EDSDK.EdsGetDirectoryItemInfo(directoryItem, out var dirItemInfo);
+            if (err != EdsError.EDS_ERR_OK)
+            {
+                Console.WriteLine($"Failed to get directory item info: {err}");
+                EDSDK.EdsRelease(directoryItem);
+                return;
+            }
+
+            // create save directory if needed
+            if (!string.IsNullOrEmpty(SavePath) && !System.IO.Directory.Exists(SavePath))
+            {
+                System.IO.Directory.CreateDirectory(SavePath);
+            }
+
+            // build full file path
+            string filePath = System.IO.Path.Combine(SavePath, dirItemInfo.szFileName);
+            Console.WriteLine($"Downloading image to: {filePath}");
+
+            // create file stream
+            err = EDSDK.EdsCreateFileStream(
+                filePath,
+                EdsFileCreateDisposition.CreateAlways,
+                EdsAccess.ReadWrite,
+                out var stream
+            );
+            if (err != EdsError.EDS_ERR_OK)
+            {
+                Console.WriteLine($"Failed to create file stream: {err}");
+                EDSDK.EdsRelease(directoryItem);
+                return;
+            }
+
+            // download image
+            err = EDSDK.EdsDownload(directoryItem, dirItemInfo.Size, stream);
+            if (err != EdsError.EDS_ERR_OK)
+            {
+                Console.WriteLine($"Failed to download image: {err}");
+                EDSDK.EdsRelease(stream);
+                EDSDK.EdsRelease(directoryItem);
+                return;
+            }
+
+            // complete download
+            err = EDSDK.EdsDownloadComplete(directoryItem);
+            if (err != EdsError.EDS_ERR_OK)
+            {
+                Console.WriteLine($"Failed to complete download: {err}");
+            }
+
+            // release resources
+            EDSDK.EdsRelease(stream);
+            EDSDK.EdsRelease(directoryItem);
+
+            Console.WriteLine($"Successfully downloaded: {dirItemInfo.szFileName}");
+        }
+        catch (Exception ex)
+        {
+            // log error but don't crash
+            Console.WriteLine($"Download error: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            if (directoryItem != IntPtr.Zero)
+            {
+                EDSDK.EdsRelease(directoryItem);
+            }
+        }
+    }
+
+    #endregion Event Handlers and Download
 }

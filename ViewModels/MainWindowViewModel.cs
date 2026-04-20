@@ -7,6 +7,7 @@
 * or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 */
 
+using System;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -24,6 +25,7 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly CameraService _cameraService;
     private readonly SettingsService _settingsService;
+    private System.Threading.CancellationTokenSource? _connectionPollingCts;
 
     public MainWindowViewModel(CameraService cameraService)
     {
@@ -89,45 +91,69 @@ public partial class MainWindowViewModel : ViewModelBase
     )]
     private bool _isLiveViewActive;
 
-    // Settings
+    // settings
     private int _liveViewFrameRate = 30;
 
     // camera commands
     [RelayCommand]
     private async Task ConnectCamera()
     {
-        Status = "Connecting...";
-        // load current settings to get connection timeout
-        var settings = _settingsService.Load();
-
-        var result = await _cameraService.ConnectAsync(settings.ConnectionTimeout);
-
-        IsCameraConnected = result;
-
-        if (result)
+        try
         {
-            CameraName = _cameraService.GetCameraName();
-            Status = "Connected";
-            // Start polling if we're on RemoteCapture context
-            if (CurrentSidePanelViewModel is RemoteCaptureViewModel rcvm)
+            System.Diagnostics.Debug.WriteLine("ConnectCamera command started");
+            Status = "Connecting...";
+
+            // load current settings to get connection timeout and save path
+            var settings = _settingsService.Load();
+            System.Diagnostics.Debug.WriteLine(
+                $"Settings loaded, timeout: {settings.ConnectionTimeout}"
+            );
+
+            // set save path on camera service before connecting
+            _cameraService.SavePath = settings.SavePath;
+            System.Diagnostics.Debug.WriteLine($"Save path set to: {settings.SavePath}");
+
+            var result = await _cameraService.ConnectAsync(settings.ConnectionTimeout);
+            System.Diagnostics.Debug.WriteLine($"Connection result: {result}");
+
+            IsCameraConnected = result;
+
+            if (result)
             {
-                rcvm.StartPolling();
+                CameraName = _cameraService.GetCameraName();
+                Status = "Connected";
+                System.Diagnostics.Debug.WriteLine($"Connected to camera: {CameraName}");
+
+                // stop polling once connected
+                StopConnectionPolling();
+
+                // navigate to Remote Capture panel by default after connection
+                NavigateToRemoteCapture();
+            }
+            else
+            {
+                Status = "Waiting for camera...";
+                System.Diagnostics.Debug.WriteLine("Connection failed, starting polling");
+
+                // start polling to detect when camera becomes available
+                StartConnectionPolling();
             }
         }
-        else
+        catch (Exception ex)
         {
-            Status = "Failed to connect";
-            await ShowErrorDialogAsync(
-                "Camera Connection Failed",
-                "No Canon camera detected. Please connect a camera and try again."
-            );
+            System.Diagnostics.Debug.WriteLine($"ConnectCamera exception: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+            Status = $"Error: {ex.Message}";
         }
     }
 
     [RelayCommand]
     private void DisconnectCamera()
     {
-        // Stop polling if we're on RemoteCapture context
+        // stop connection polling
+        StopConnectionPolling();
+
+        // stop polling if we're on RemoteCapture context
         if (CurrentSidePanelViewModel is RemoteCaptureViewModel rcvm)
         {
             rcvm.StopPolling();
@@ -138,6 +164,72 @@ public partial class MainWindowViewModel : ViewModelBase
         IsCameraConnected = false;
         CameraName = string.Empty;
         Status = "Disconnected";
+    }
+
+    private void StartConnectionPolling()
+    {
+        // stop any existing polling
+        StopConnectionPolling();
+
+        _connectionPollingCts = new System.Threading.CancellationTokenSource();
+        var token = _connectionPollingCts.Token;
+
+        Task.Run(
+            async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await Task.Delay(2000, token); // poll every 2 seconds
+
+                        // only poll if not connected
+                        if (!IsCameraConnected)
+                        {
+                            var settings = _settingsService.Load();
+
+                            // set save path before connecting
+                            _cameraService.SavePath = settings.SavePath;
+
+                            var result = await _cameraService.ConnectAsync(
+                                settings.ConnectionTimeout
+                            );
+
+                            if (result)
+                            {
+                                // update UI on main thread
+                                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                                {
+                                    IsCameraConnected = true;
+                                    CameraName = _cameraService.GetCameraName();
+                                    Status = "Connected";
+                                    NavigateToRemoteCapture();
+                                });
+
+                                // stop polling once connected
+                                break;
+                            }
+                        }
+                    }
+                    catch (System.OperationCanceledException)
+                    {
+                        break;
+                    }
+                    catch
+                    {
+                        // silently ignore errors during polling
+                    }
+                }
+            },
+            token
+        );
+    }
+
+    private void StopConnectionPolling()
+    {
+        _connectionPollingCts?.Cancel();
+        _connectionPollingCts?.Dispose();
+        _connectionPollingCts = null;
     }
 
     // navigation commands
@@ -196,7 +288,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 rcvm.StartPolling();
             }
 
-            // Subscribe to histogram mode changes
+            // subscribe to histogram mode changes
             rcvm.PropertyChanged += OnRemoteCapturePropertyChanged;
         }
         else if (CurrentSidePanelViewModel is FocusStackViewModel fsvm)
@@ -331,7 +423,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 IsLiveViewActive = true;
 
-                // Start histogram updates
+                // start histogram updates
                 StartHistogramUpdates();
 
                 // explicitly notify focus commands to re-evaluate CanExecute
@@ -396,7 +488,7 @@ public partial class MainWindowViewModel : ViewModelBase
                                 HistogramData = histogram;
                             });
                         }
-                        await Task.Delay(500, token); // Update every 500ms
+                        await Task.Delay(500, token); // update every 500ms
                     }
                     catch (System.OperationCanceledException)
                     {
@@ -404,7 +496,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     }
                     catch
                     {
-                        // Silently ignore errors
+                        // silently ignore errors
                     }
                 }
             },
@@ -535,40 +627,6 @@ public partial class MainWindowViewModel : ViewModelBase
                 // fallback: do nothing or take a single picture
                 break;
         }
-    }
-
-    // legacy window-opening commands (to be deprecated)
-    [RelayCommand]
-    private void OpenLiveView()
-    {
-        // share conection in the same session
-        var window = new LiveViewWindow(new LiveViewViewModel(_cameraService));
-
-        window.Show();
-    }
-
-    [RelayCommand]
-    private void OpenFocusStack()
-    {
-        var window = new FocusStackView { DataContext = new FocusStackViewModel(_cameraService) };
-
-        //window.Show();
-    }
-
-    [RelayCommand]
-    private void OpenTimeLapse()
-    {
-        var window = new TimeLapseView { DataContext = new TimeLapseViewModel(_cameraService) };
-
-        //window.Show();
-    }
-
-    [RelayCommand]
-    private void OpenSettings()
-    {
-        var window = new SettingsWindow { DataContext = new SettingsViewModel() };
-
-        window.Show();
     }
 
     // helper method to show error dialogs

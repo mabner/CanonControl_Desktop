@@ -17,11 +17,33 @@ namespace CanonControl.CanonSDK;
 
 public static class EDSDK
 {
+    #region Conditional Loading
+
 #if WINDOWS
     private const string DLL = "EDSDK.dll";
 #else
     private const string DLL = "EDSDK";
 #endif
+
+    #endregion Conditional Loading
+
+    #region Event Handler Delegates
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint EdsObjectEventHandler(uint inEvent, IntPtr inRef, IntPtr inContext);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint EdsPropertyEventHandler(
+        uint inEvent,
+        uint inPropertyID,
+        uint inParam,
+        IntPtr inContext
+    );
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint EdsStateEventHandler(uint inEvent, uint inParam, IntPtr inContext);
+
+    #endregion Event Handler Delegates
 
     # region Initialization and Camera Management
     [DllImport(DLL)]
@@ -52,6 +74,62 @@ public static class EDSDK
     public static extern EdsError EdsRelease(IntPtr obj);
 
     # endregion# Initialization and Camera Management
+
+    #region Event Handler Registration
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsSetObjectEventHandler(
+        IntPtr camera,
+        uint inEvent,
+        EdsObjectEventHandler inObjectEventHandler,
+        IntPtr inContext
+    );
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsSetPropertyEventHandler(
+        IntPtr camera,
+        uint inEvent,
+        EdsPropertyEventHandler inPropertyEventHandler,
+        IntPtr inContext
+    );
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsSetCameraStateEventHandler(
+        IntPtr camera,
+        uint inEvent,
+        EdsStateEventHandler inStateEventHandler,
+        IntPtr inContext
+    );
+
+    #endregion Event Handler Registration
+
+    #region Image Download
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsGetDirectoryItemInfo(
+        IntPtr inDirItemRef,
+        out EdsDirectoryItemInfo outDirItemInfo
+    );
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsCreateFileStream(
+        [MarshalAs(UnmanagedType.LPStr)] string inFileName,
+        uint inCreateDisposition,
+        uint inDesiredAccess,
+        out IntPtr outStream
+    );
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsDownload(
+        IntPtr inDirItemRef,
+        ulong inReadSize,
+        IntPtr outStream
+    );
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsDownloadComplete(IntPtr inDirItemRef);
+
+    #endregion Image Download
 
     # region Live View
     [DllImport(DLL)]

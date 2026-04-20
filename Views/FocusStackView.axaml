@@ -8,53 +8,87 @@
              x:DataType="vm:FocusStackViewModel">
 
     <StackPanel Spacing="16" Margin="16">
+        <TextBlock Text="Focus Stacking"
+                   FontSize="20"
+                   FontWeight="Bold"
+                   Margin="0,0,0,8" />
 
         <!-- Number of Shots -->
         <StackPanel Spacing="8">
-            <TextBlock Text="Number of Shots" FontSize="16" />
+            <TextBlock Text="Number of Shots:" FontSize="16" />
             <NumericUpDown Value="{Binding NumberOfShots}"
                            Minimum="1"
                            Maximum="1000"
                            Increment="1"
                            MinHeight="44"
                            IsEnabled="{Binding !IsRunning}" />
+            <TextBlock Text="Total number of images to capture"
+                       FontSize="12"
+                       Foreground="Gray" />
         </StackPanel>
 
         <!-- Step Size -->
         <StackPanel Spacing="8">
-            <TextBlock Text="Step Size" FontSize="16" />
+            <TextBlock Text="Step Size:" FontSize="16" />
             <NumericUpDown Value="{Binding StepSize}"
                            Minimum="1"
                            Maximum="100"
                            Increment="1"
                            MinHeight="44"
                            IsEnabled="{Binding !IsRunning}" />
+            <TextBlock Text="Focus steps to move between shots"
+                       FontSize="12"
+                       Foreground="Gray" />
         </StackPanel>
 
-        <!-- Status Indicator -->
+        <!-- Shoot Interval -->
         <StackPanel Spacing="8">
-            <TextBlock Text="Status" FontSize="16" />
-            <Border Background="{DynamicResource SystemAccentColor}"
-                    CornerRadius="4"
-                    Padding="12"
-                    MinHeight="44"
-                    IsVisible="{Binding IsRunning}">
-                <TextBlock Text="Focus Stack Running..."
-                           FontSize="14"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center" />
-            </Border>
-            <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
-                    CornerRadius="4"
-                    Padding="12"
-                    MinHeight="44"
-                    IsVisible="{Binding !IsRunning}">
-                <TextBlock Text="Ready"
-                           FontSize="14"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center" />
-            </Border>
+            <TextBlock Text="Shoot Interval (seconds):" FontSize="16" />
+            <NumericUpDown Value="{Binding ShootIntervalSeconds}"
+                           Minimum="0.5"
+                           Maximum="10"
+                           Increment="0.5"
+                           FormatString="0.0"
+                           MinHeight="44"
+                           IsEnabled="{Binding !IsRunning}" />
+            <TextBlock Text="Wait time between shots for stabilization"
+                       FontSize="12"
+                       Foreground="Gray" />
         </StackPanel>
 
+        <!-- Status -->
+        <StackPanel Spacing="8">
+            <TextBlock Text="Status:" FontSize="16" />
+            <TextBlock Text="{Binding Status}"
+                       FontSize="14"
+                       Foreground="{Binding IsRunning, Converter={StaticResource BoolToColorConverter}}" />
+            <TextBlock Text="{Binding CurrentShot, StringFormat='Current Shot: {0}'}"
+                       FontSize="14"
+                       IsVisible="{Binding IsRunning}" />
+        </StackPanel>
+
+        <!-- Info -->
+        <Border Background="#F0F0F0"
+                Padding="12"
+                CornerRadius="4"
+                Margin="0,8,0,0">
+            <StackPanel Spacing="4">
+                <TextBlock Text="How it works:"
+                           FontWeight="Bold"
+                           FontSize="14" />
+                <TextBlock Text="• Takes multiple shots while moving focus"
+                           FontSize="12"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="• Each shot focuses slightly farther than previous"
+                           FontSize="12"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="• Combine images in software for extended depth of field"
+                           FontSize="12"
+                           TextWrapping="Wrap" />
+                <TextBlock Text="• Useful for macro and product photography"
+                           FontSize="12"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
     </StackPanel>
 </UserControl>

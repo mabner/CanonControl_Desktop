@@ -24,7 +24,16 @@ public class CameraService
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _focusCts;
     private volatile bool _isEvfDownloadPaused = false;
+
+    #region Settings
     public bool LiveViewDuringAutoFocus { get; set; } = true;
+    public string SavePath
+    {
+        get => _sdk.SavePath;
+        set => _sdk.SavePath = value;
+    }
+
+    #endregion Settings
 
     #region Connect and Startup
 
@@ -88,7 +97,7 @@ public class CameraService
 
         _sdk.StartEvf();
 
-        // Calculate delay between frames based on frame rate
+        // calculate delay between frames based on frame rate
         // frameRate (fps) -> delay (ms) = 1000 / fps
         int delayMs = 1000 / frameRate;
 

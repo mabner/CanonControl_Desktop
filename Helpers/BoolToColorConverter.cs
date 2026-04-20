@@ -3,22 +3,22 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Data.Converters;
 using Avalonia.Media;
 
-namespace CanonControl.Helpers
-{
-    public class BoolToColorConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return (bool)value ? Brushes.Green : Brushes.Red;
-        }
+namespace CanonControl.Helpers;
 
-        public object ConvertBack(
-            object value,
-            Type targetType,
-            object parameter,
-            CultureInfo culture
-        ) => throw new NotImplementedException();
+public class BoolToColorConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is bool boolValue && boolValue ? Brushes.Green : Brushes.Red;
     }
+
+    public object? ConvertBack(
+        object? value,
+        Type targetType,
+        object? parameter,
+        CultureInfo culture
+    ) => throw new NotImplementedException();
 }
