@@ -71,6 +71,15 @@ public partial class MainWindowViewModel : ViewModelBase
     private HistogramDisplayMode _histogramDisplayMode = HistogramDisplayMode.None;
 
     [ObservableProperty]
+    private CompositionAidMode _compositionAidMode = CompositionAidMode.None;
+
+    [ObservableProperty]
+    private bool _isCompositionMirrored = false;
+
+    [ObservableProperty]
+    private int _compositionRotation = 0;
+
+    [ObservableProperty]
     [NotifyCanExecuteChangedFor(
         nameof(StartFocusNearCommand),
         nameof(StartFocusFarCommand),
@@ -232,6 +241,27 @@ public partial class MainWindowViewModel : ViewModelBase
             if (sender is RemoteCaptureViewModel rcvm)
             {
                 HistogramDisplayMode = rcvm.HistogramMode;
+            }
+        }
+        else if (e.PropertyName == nameof(RemoteCaptureViewModel.CompositionMode))
+        {
+            if (sender is RemoteCaptureViewModel rcvm)
+            {
+                CompositionAidMode = rcvm.CompositionMode;
+            }
+        }
+        else if (e.PropertyName == nameof(RemoteCaptureViewModel.IsCompositionMirrored))
+        {
+            if (sender is RemoteCaptureViewModel rcvm)
+            {
+                IsCompositionMirrored = rcvm.IsCompositionMirrored;
+            }
+        }
+        else if (e.PropertyName == nameof(RemoteCaptureViewModel.CompositionRotation))
+        {
+            if (sender is RemoteCaptureViewModel rcvm)
+            {
+                CompositionRotation = rcvm.CompositionRotation;
             }
         }
     }

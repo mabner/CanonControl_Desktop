@@ -40,6 +40,16 @@ public partial class RemoteCaptureViewModel : ViewModelBase
     [ObservableProperty]
     private HistogramDisplayMode _histogramMode = HistogramDisplayMode.None;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CompositionModeIndex), nameof(IsGoldenCompositionMode))]
+    private CompositionAidMode _compositionMode = CompositionAidMode.None;
+
+    [ObservableProperty]
+    private bool _isCompositionMirrored = false;
+
+    [ObservableProperty]
+    private int _compositionRotation = 0;
+
     public RemoteCaptureViewModel(CameraService cameraService)
     {
         _cameraService = cameraService;
@@ -101,6 +111,18 @@ public partial class RemoteCaptureViewModel : ViewModelBase
     {
         _cameraService.DecrementIso();
         UpdateCameraSettings();
+    }
+
+    [RelayCommand]
+    private void ToggleCompositionMirror()
+    {
+        IsCompositionMirrored = !IsCompositionMirrored;
+    }
+
+    [RelayCommand]
+    private void RotateComposition()
+    {
+        CompositionRotation = (CompositionRotation + 90) % 360;
     }
 
     public void StartPolling()

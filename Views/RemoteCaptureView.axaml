@@ -99,6 +99,37 @@
       <ComboBoxItem Content="RGB" Tag="RGB" />
     </ComboBox>
 
+    <!-- Composition Aid Mode -->
+    <TextBlock Text="Composition Aid" FontSize="18" FontWeight="Bold" Margin="0,16,0,0" />
+
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <ComboBox SelectedIndex="{Binding CompositionModeIndex}"
+                MinHeight="44"
+                MinWidth="200">
+        <ComboBoxItem Content="None" />
+        <ComboBoxItem Content="Rule of Thirds" />
+        <ComboBoxItem Content="Golden Ratio" />
+        <ComboBoxItem Content="Golden Triangle" />
+        <ComboBoxItem Content="Center Cross" />
+        <ComboBoxItem Content="Diagonal Lines" />
+        <ComboBoxItem Content="Grid" />
+      </ComboBox>
+
+      <!-- Golden Ratio/Triangle controls - only visible when Golden Ratio or Golden Triangle is selected -->
+      <Button Content="↔️"
+              ToolTip.Tip="Mirror"
+              Command="{Binding ToggleCompositionMirrorCommand}"
+              MinWidth="44" MinHeight="44"
+              IsVisible="{Binding IsGoldenCompositionMode}" />
+
+      <!-- Rotate button only for Golden Ratio (not for Golden Triangle) -->
+      <Button Content="↻"
+              ToolTip.Tip="Rotate 90°"
+              Command="{Binding RotateCompositionCommand}"
+              MinWidth="44" MinHeight="44"
+              IsVisible="{Binding CompositionMode, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=GoldenRatio}" />
+    </StackPanel>
+
     <!-- Countdown Display -->
     <TextBlock Text="{Binding CountdownSeconds, StringFormat='Capturing in {0}...'}"
                FontSize="20"
