@@ -32,12 +32,14 @@ public partial class RemoteCaptureViewModel : ViewModelBase
     private bool _isAutoIso;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(DelaySecondsIndex))]
     private int _delaySeconds = 0;
 
     [ObservableProperty]
     private int _countdownSeconds = 0;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HistogramModeIndex))]
     private HistogramDisplayMode _histogramMode = HistogramDisplayMode.None;
 
     [ObservableProperty]
@@ -49,6 +51,47 @@ public partial class RemoteCaptureViewModel : ViewModelBase
 
     [ObservableProperty]
     private int _compositionRotation = 0;
+
+    // ComboBox index properties for MVVM binding
+    public int DelaySecondsIndex
+    {
+        get =>
+            DelaySeconds switch
+            {
+                0 => 0,
+                2 => 1,
+                5 => 2,
+                10 => 3,
+                _ => 0,
+            };
+        set
+        {
+            DelaySeconds = value switch
+            {
+                0 => 0,
+                1 => 2,
+                2 => 5,
+                3 => 10,
+                _ => 0,
+            };
+        }
+    }
+
+    public int HistogramModeIndex
+    {
+        get => (int)HistogramMode;
+        set => HistogramMode = (HistogramDisplayMode)value;
+    }
+
+    public int CompositionModeIndex
+    {
+        get => (int)CompositionMode;
+        set => CompositionMode = (CompositionAidMode)value;
+    }
+
+    public bool IsGoldenCompositionMode =>
+        CompositionMode == CompositionAidMode.GoldenRatio
+        || CompositionMode == CompositionAidMode.GoldenTriangle;
 
     public RemoteCaptureViewModel(CameraService cameraService)
     {
