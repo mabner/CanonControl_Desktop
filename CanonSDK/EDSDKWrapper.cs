@@ -13,6 +13,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using CanonControl.Models;
 
 namespace CanonControl.CanonSDK;
 
@@ -171,7 +172,88 @@ public class EDSDKWrapper
         return data; // return the JPEG data of the live view frame
     }
 
-    #endregion Live Liew
+    public HistogramData? GetHistogramData()
+    {
+        IntPtr stream;
+        IntPtr evfImage;
+
+        // cria buffer
+        EDSDK.EdsCreateMemoryStream(0, out stream);
+
+        // cria referência do frame
+        EDSDK.EdsCreateEvfImageRef(stream, out evfImage);
+
+        // baixa imagem da câmera
+        var err = EDSDK.EdsDownloadEvfImage(_camera, evfImage);
+
+        if (err != EdsError.EDS_ERR_OK)
+        {
+            EDSDK.EdsRelease(evfImage);
+            EDSDK.EdsRelease(stream);
+            return null;
+        }
+
+        var histogram = new HistogramData();
+
+        // Get histogram status
+        uint status = 0;
+        if (
+            EDSDK.EdsGetPropertyData(
+                evfImage,
+                EdsPropertyID.Evf_HistogramStatus,
+                0,
+                sizeof(uint),
+                out status
+            ) == EdsError.EDS_ERR_OK
+        )
+        {
+            histogram.Status = (int)status;
+        }
+
+        // Get histogram data if visible
+        if (histogram.Status == 1) // Normal
+        {
+            // Get Y (Luminance) histogram
+            EDSDK.EdsGetPropertyData(
+                evfImage,
+                EdsPropertyID.Evf_HistogramY,
+                0,
+                256 * sizeof(uint),
+                histogram.Luminance
+            );
+
+            // Get RGB histograms
+            EDSDK.EdsGetPropertyData(
+                evfImage,
+                EdsPropertyID.Evf_HistogramR,
+                0,
+                256 * sizeof(uint),
+                histogram.Red
+            );
+            EDSDK.EdsGetPropertyData(
+                evfImage,
+                EdsPropertyID.Evf_HistogramG,
+                0,
+                256 * sizeof(uint),
+                histogram.Green
+            );
+            EDSDK.EdsGetPropertyData(
+                evfImage,
+                EdsPropertyID.Evf_HistogramB,
+                0,
+                256 * sizeof(uint),
+                histogram.Blue
+            );
+        }
+
+        // liberar memória
+        EDSDK.EdsRelease(evfImage);
+        EDSDK.EdsRelease(stream);
+
+        return histogram;
+    }
+
+    #endregion Live View
 
     #region Focus Control
 

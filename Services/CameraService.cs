@@ -13,6 +13,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CanonControl.CanonSDK;
+using CanonControl.Models;
 
 namespace CanonControl.Services;
 
@@ -290,4 +291,16 @@ public class CameraService
     }
 
     #endregion Focus Control
+
+    #region Histogram
+
+    public HistogramData? GetHistogramData()
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.GetHistogramData();
+        }
+    }
+
+    #endregion Histogram
 }

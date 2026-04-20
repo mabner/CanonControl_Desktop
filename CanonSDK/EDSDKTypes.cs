@@ -50,6 +50,11 @@ public static class EdsPropertyID
 {
     public const uint Evf_OutputDevice = 0x00000500;
     public const uint Evf_Mode = 0x00000501;
+    public const uint Evf_HistogramY = 0x00000515;
+    public const uint Evf_HistogramR = 0x00000516;
+    public const uint Evf_HistogramG = 0x00000517;
+    public const uint Evf_HistogramB = 0x00000518;
+    public const uint Evf_HistogramStatus = 0x0000050C;
 }
 
 public static class EdsOutputDevice
@@ -98,6 +103,13 @@ public static class EdsEvfAf
     // Backward-compatible aliases
     public const int ON = 1;
     public const int OFF = 0;
+}
+
+public static class EdsEvfHistogramStatus
+{
+    public const int Hide = 0;
+    public const int Normal = 1;
+    public const int Grayout = 2;
 }
 
 #endregion Focus Control

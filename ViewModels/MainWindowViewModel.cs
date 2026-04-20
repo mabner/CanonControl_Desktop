@@ -1,4 +1,13 @@
-﻿using System.Threading.Tasks;
+﻿/*
+* CanonControl
+* Copyright (c) [2026] [Marcos Leite]
+*
+* This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+* To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/4.0/
+* or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+*/
+
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -54,6 +63,12 @@ public partial class MainWindowViewModel : ViewModelBase
     // live View State
     [ObservableProperty]
     private Bitmap? _liveImage;
+
+    [ObservableProperty]
+    private HistogramData? _histogramData;
+
+    [ObservableProperty]
+    private HistogramDisplayMode _histogramDisplayMode = HistogramDisplayMode.None;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(
@@ -217,6 +232,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 IsLiveViewActive = true;
 
+                // Start histogram updates
+                StartHistogramUpdates();
+
                 // explicitly notify focus commands to re-evaluate CanExecute
                 StartFocusNearCommand.NotifyCanExecuteChanged();
                 StartFocusFarCommand.NotifyCanExecuteChanged();
@@ -237,9 +255,11 @@ public partial class MainWindowViewModel : ViewModelBase
             // stop live view
             try
             {
+                StopHistogramUpdates();
                 _cameraService.StopLiveView();
                 IsLiveViewActive = false;
                 LiveImage = null;
+                HistogramData = null;
 
                 // explicitly notify focus commands to re-evaluate CanExecute
                 StartFocusNearCommand.NotifyCanExecuteChanged();
@@ -253,6 +273,51 @@ public partial class MainWindowViewModel : ViewModelBase
                 // silently handle errors - keep toggle in current state
             }
         }
+    }
+
+    private System.Threading.CancellationTokenSource? _histogramCts;
+
+    private void StartHistogramUpdates()
+    {
+        _histogramCts = new System.Threading.CancellationTokenSource();
+        var token = _histogramCts.Token;
+
+        Task.Run(
+            async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        var histogram = _cameraService.GetHistogramData();
+                        if (histogram != null)
+                        {
+                            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                            {
+                                HistogramData = histogram;
+                            });
+                        }
+                        await Task.Delay(500, token); // Update every 500ms
+                    }
+                    catch (System.OperationCanceledException)
+                    {
+                        break;
+                    }
+                    catch
+                    {
+                        // Silently ignore errors
+                    }
+                }
+            },
+            token
+        );
+    }
+
+    private void StopHistogramUpdates()
+    {
+        _histogramCts?.Cancel();
+        _histogramCts?.Dispose();
+        _histogramCts = null;
     }
 
     private bool CanExecuteFocusCommands() => IsLiveViewActive;

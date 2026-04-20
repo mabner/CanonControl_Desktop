@@ -4,6 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:views="using:CanonControl.Views"
+        xmlns:helpers="using:CanonControl.Helpers"
         x:Class="CanonControl.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
@@ -11,6 +13,10 @@
         CanResize="False"
         WindowStartupLocation="CenterScreen"
         Title="{Binding WindowTitle}">
+
+        <Window.Resources>
+                <helpers:EnumNotEqualConverter x:Key="EnumNotEqualConverter" />
+        </Window.Resources>
 
         <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="3*,2*">
                 <!-- Navigation Bar (Row 0, ColumnSpan 2) -->
@@ -60,11 +66,20 @@
                 </Grid>
 
                 <!-- Live View Area (Row 1, Column 0) -->
-                <Border Grid.Row="1" Grid.Column="0" Background="Black">
+                <Grid Grid.Row="1" Grid.Column="0" Background="Black">
                         <Image Source="{Binding LiveImage}"
                                Stretch="Uniform"
                                RenderOptions.BitmapInterpolationMode="LowQuality" />
-                </Border>
+
+                        <!-- Histogram Overlay -->
+                        <views:HistogramControl Histogram="{Binding HistogramData}"
+                                                DisplayMode="{Binding HistogramDisplayMode}"
+                                                Width="200" Height="100"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top"
+                                                Margin="8"
+                                                IsVisible="{Binding HistogramDisplayMode, Converter={StaticResource EnumNotEqualConverter}, ConverterParameter=None}" />
+                </Grid>
 
                 <!-- Control Panel (Row 2, Column 0) -->
                 <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Margin="4">
