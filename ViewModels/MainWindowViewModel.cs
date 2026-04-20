@@ -96,6 +96,11 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             CameraName = _cameraService.GetCameraName();
             Status = "Connected";
+            // Start polling if we're on RemoteCapture context
+            if (CurrentSidePanelViewModel is RemoteCaptureViewModel rcvm)
+            {
+                rcvm.StartPolling();
+            }
         }
         else
         {
@@ -110,6 +115,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [RelayCommand]
     private void DisconnectCamera()
     {
+        // Stop polling if we're on RemoteCapture context
+        if (CurrentSidePanelViewModel is RemoteCaptureViewModel rcvm)
+        {
+            rcvm.StopPolling();
+        }
+
         _cameraService.Disconnect();
 
         IsCameraConnected = false;
@@ -157,7 +168,17 @@ public partial class MainWindowViewModel : ViewModelBase
     // subscribe to IsRunning property changes in feature ViewModels
     private void SubscribeToCurrentViewModel()
     {
-        if (CurrentSidePanelViewModel is FocusStackViewModel fsvm)
+        if (CurrentSidePanelViewModel is RemoteCaptureViewModel rcvm)
+        {
+            if (IsCameraConnected)
+            {
+                rcvm.StartPolling();
+            }
+
+            // Subscribe to histogram mode changes
+            rcvm.PropertyChanged += OnRemoteCapturePropertyChanged;
+        }
+        else if (CurrentSidePanelViewModel is FocusStackViewModel fsvm)
         {
             fsvm.PropertyChanged += OnFeatureViewModelPropertyChanged;
         }
@@ -169,7 +190,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void UnsubscribeFromCurrentViewModel()
     {
-        if (CurrentSidePanelViewModel is FocusStackViewModel fsvm)
+        if (CurrentSidePanelViewModel is RemoteCaptureViewModel rcvm)
+        {
+            rcvm.StopPolling();
+            rcvm.PropertyChanged -= OnRemoteCapturePropertyChanged;
+        }
+        else if (CurrentSidePanelViewModel is FocusStackViewModel fsvm)
         {
             fsvm.PropertyChanged -= OnFeatureViewModelPropertyChanged;
         }
@@ -190,6 +216,20 @@ public partial class MainWindowViewModel : ViewModelBase
         )
         {
             OnPropertyChanged(nameof(ContextCaptureLabel));
+        }
+    }
+
+    private void OnRemoteCapturePropertyChanged(
+        object? sender,
+        System.ComponentModel.PropertyChangedEventArgs e
+    )
+    {
+        if (e.PropertyName == nameof(RemoteCaptureViewModel.HistogramMode))
+        {
+            if (sender is RemoteCaptureViewModel rcvm)
+            {
+                HistogramDisplayMode = rcvm.HistogramMode;
+            }
         }
     }
 

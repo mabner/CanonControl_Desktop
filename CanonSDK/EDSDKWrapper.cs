@@ -289,6 +289,321 @@ public class EDSDKWrapper
 
     #endregion Focus Control
 
+    #region Camera Settings
+
+    public string GetShutterSpeed()
+    {
+        if (!TryGetUInt32Property(EdsPropertyID.PropID_Tv, out var tvValue))
+            return "N/A";
+
+        return ConvertTvToString(tvValue);
+    }
+
+    public string GetAperture()
+    {
+        if (!TryGetUInt32Property(EdsPropertyID.PropID_Av, out var avValue))
+            return "N/A";
+
+        return ConvertAvToString(avValue);
+    }
+
+    public string GetIso()
+    {
+        if (!TryGetUInt32Property(EdsPropertyID.PropID_ISOSpeed, out var isoValue))
+            return "N/A";
+
+        return ConvertIsoToString(isoValue);
+    }
+
+    public bool IsAutoIso()
+    {
+        if (!TryGetUInt32Property(EdsPropertyID.PropID_ISOSpeed, out var isoValue))
+            return false;
+
+        return isoValue == 0x00; // 0x00 = Auto ISO
+    }
+
+    private string ConvertTvToString(uint tv)
+    {
+        // Canon Tv (Time Value) to shutter speed string
+        // Based on Canon EDSDK documentation
+        return tv switch
+        {
+            0x0C => "Bulb",
+            0x10 => "30\"",
+            0x13 => "25\"",
+            0x14 => "20\"",
+            0x15 => "20\"",
+            0x18 => "15\"",
+            0x1B => "13\"",
+            0x1C => "10\"",
+            0x1D => "10\"",
+            0x20 => "8\"",
+            0x23 => "6\"",
+            0x24 => "6\"",
+            0x25 => "5\"",
+            0x28 => "4\"",
+            0x2B => "3.2\"",
+            0x2C => "3\"",
+            0x2D => "2.5\"",
+            0x30 => "2\"",
+            0x33 => "1.6\"",
+            0x34 => "1.5\"",
+            0x35 => "1.3\"",
+            0x38 => "1\"",
+            0x3B => "0.8\"",
+            0x3C => "0.7\"",
+            0x3D => "0.6\"",
+            0x40 => "0.5\"",
+            0x43 => "0.4\"",
+            0x44 => "0.3\"",
+            0x45 => "0.3\"",
+            0x48 => "1/4",
+            0x4B => "1/5",
+            0x4C => "1/6",
+            0x4D => "1/6",
+            0x50 => "1/8",
+            0x53 => "1/10",
+            0x54 => "1/10",
+            0x55 => "1/13",
+            0x58 => "1/15",
+            0x5B => "1/20",
+            0x5C => "1/20",
+            0x5D => "1/25",
+            0x60 => "1/30",
+            0x63 => "1/40",
+            0x64 => "1/45",
+            0x65 => "1/50",
+            0x68 => "1/60",
+            0x6B => "1/80",
+            0x6C => "1/90",
+            0x6D => "1/100",
+            0x70 => "1/125",
+            0x73 => "1/160",
+            0x74 => "1/180",
+            0x75 => "1/200",
+            0x78 => "1/250",
+            0x7B => "1/320",
+            0x7C => "1/350",
+            0x7D => "1/400",
+            0x80 => "1/500",
+            0x83 => "1/640",
+            0x84 => "1/750",
+            0x85 => "1/800",
+            0x88 => "1/1000",
+            0x8B => "1/1250",
+            0x8C => "1/1500",
+            0x8D => "1/1600",
+            0x90 => "1/2000",
+            0x93 => "1/2500",
+            0x94 => "1/3000",
+            0x95 => "1/3200",
+            0x98 => "1/4000",
+            0x9B => "1/5000",
+            0x9C => "1/6000",
+            0x9D => "1/6400",
+            0xA0 => "1/8000",
+            _ => $"0x{tv:X}",
+        };
+    }
+
+    private string ConvertAvToString(uint av)
+    {
+        // Canon Av (Aperture Value) to f-stop string
+        // Based on Canon EDSDK documentation
+        return av switch
+        {
+            0x08 => "f/1.0",
+            0x0B => "f/1.1",
+            0x0C => "f/1.2",
+            0x0D => "f/1.2",
+            0x10 => "f/1.4",
+            0x13 => "f/1.6",
+            0x14 => "f/1.8",
+            0x15 => "f/1.8",
+            0x18 => "f/2.0",
+            0x1B => "f/2.2",
+            0x1C => "f/2.5",
+            0x1D => "f/2.5",
+            0x20 => "f/2.8",
+            0x23 => "f/3.2",
+            0x24 => "f/3.5",
+            0x25 => "f/3.5",
+            0x28 => "f/4.0",
+            0x2B => "f/4.5",
+            0x2C => "f/4.5",
+            0x2D => "f/5.0",
+            0x30 => "f/5.6",
+            0x33 => "f/6.3",
+            0x34 => "f/6.7",
+            0x35 => "f/7.1",
+            0x38 => "f/8.0",
+            0x3B => "f/9.0",
+            0x3C => "f/9.5",
+            0x3D => "f/10",
+            0x40 => "f/11",
+            0x43 => "f/13",
+            0x44 => "f/13",
+            0x45 => "f/14",
+            0x48 => "f/16",
+            0x4B => "f/18",
+            0x4C => "f/19",
+            0x4D => "f/20",
+            0x50 => "f/22",
+            0x53 => "f/25",
+            0x54 => "f/27",
+            0x55 => "f/29",
+            0x58 => "f/32",
+            0x5B => "f/36",
+            0x5C => "f/38",
+            0x5D => "f/40",
+            0x60 => "f/45",
+            0x63 => "f/51",
+            0x64 => "f/54",
+            0x65 => "f/57",
+            0x68 => "f/64",
+            0x6B => "f/72",
+            0x6C => "f/76",
+            0x6D => "f/80",
+            0x70 => "f/91",
+            _ => $"0x{av:X}",
+        };
+    }
+
+    private string ConvertIsoToString(uint iso)
+    {
+        // Canon ISO values to ISO string
+        // Based on Canon EDSDK documentation
+        return iso switch
+        {
+            0x00 => "Auto",
+            0x28 => "6",
+            0x30 => "12",
+            0x38 => "25",
+            0x40 => "50",
+            0x48 => "100",
+            0x4B => "125",
+            0x4D => "160",
+            0x50 => "200",
+            0x53 => "250",
+            0x55 => "320",
+            0x58 => "400",
+            0x5B => "500",
+            0x5D => "640",
+            0x60 => "800",
+            0x63 => "1000",
+            0x65 => "1250",
+            0x68 => "1600",
+            0x6B => "2000",
+            0x6D => "2500",
+            0x70 => "3200",
+            0x73 => "4000",
+            0x75 => "5000",
+            0x78 => "6400",
+            0x7B => "8000",
+            0x7D => "10000",
+            0x80 => "12800",
+            0x83 => "16000",
+            0x85 => "20000",
+            0x88 => "25600",
+            0x8B => "32000",
+            0x8D => "40000",
+            0x90 => "51200",
+            0x93 => "64000",
+            0x95 => "80000",
+            0x98 => "102400",
+            _ => $"0x{iso:X}",
+        };
+    }
+
+    #endregion Camera Settings
+
+    #region Property Management
+
+    public bool GetPropertyDesc(uint propertyId, out EdsPropertyDesc desc)
+    {
+        return EDSDK.EdsGetPropertyDesc(_camera, propertyId, out desc) == EdsError.EDS_ERR_OK;
+    }
+
+    public bool SetProperty(uint propertyId, uint value)
+    {
+        return TrySetUInt32Property(propertyId, value);
+    }
+
+    public bool GetAvailablePropertyValues(uint propertyId, out uint[] values)
+    {
+        if (GetPropertyDesc(propertyId, out var desc) && desc.NumElements > 0)
+        {
+            values = new uint[desc.NumElements];
+            for (int i = 0; i < desc.NumElements; i++)
+            {
+                values[i] = (uint)desc.PropDesc[i];
+            }
+            return true;
+        }
+
+        values = Array.Empty<uint>();
+        return false;
+    }
+
+    public bool GetNextPropertyValue(uint propertyId, out uint nextValue)
+    {
+        nextValue = 0;
+
+        if (!TryGetUInt32Property(propertyId, out var currentValue))
+            return false;
+
+        if (
+            !GetAvailablePropertyValues(propertyId, out var availableValues)
+            || availableValues.Length == 0
+        )
+            return false;
+
+        // Find current value index
+        int currentIndex = Array.IndexOf(availableValues, currentValue);
+        if (currentIndex == -1)
+        {
+            // Current value not in list, return first available
+            nextValue = availableValues[0];
+            return true;
+        }
+
+        // Get next value (wrap around to start)
+        int nextIndex = (currentIndex + 1) % availableValues.Length;
+        nextValue = availableValues[nextIndex];
+        return true;
+    }
+
+    public bool GetPreviousPropertyValue(uint propertyId, out uint prevValue)
+    {
+        prevValue = 0;
+
+        if (!TryGetUInt32Property(propertyId, out var currentValue))
+            return false;
+
+        if (
+            !GetAvailablePropertyValues(propertyId, out var availableValues)
+            || availableValues.Length == 0
+        )
+            return false;
+
+        // Find current value index
+        int currentIndex = Array.IndexOf(availableValues, currentValue);
+        if (currentIndex == -1)
+        {
+            // Current value not in list, return last available
+            prevValue = availableValues[^1];
+            return true;
+        }
+
+        // Get previous value (wrap around to end)
+        int prevIndex = currentIndex == 0 ? availableValues.Length - 1 : currentIndex - 1;
+        prevValue = availableValues[prevIndex];
+        return true;
+    }
+
+    #endregion Property Management
+
     #region Backward-compatible aliases
 
     public bool StartLiveView() => StartEvf();

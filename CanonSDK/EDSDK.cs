@@ -53,7 +53,7 @@ public static class EDSDK
 
     # endregion# Initialization and Camera Management
 
-    # region LiveView
+    # region Live View
     [DllImport(DLL)]
     public static extern EdsError EdsSetPropertyData(
         IntPtr camera,
@@ -73,6 +73,24 @@ public static class EDSDK
     ); // get live view status
 
     [DllImport(DLL)]
+    public static extern EdsError EdsGetPropertyData(
+        IntPtr evfImageRef,
+        uint propertyID,
+        int param,
+        int size,
+        [Out] uint[] data
+    );
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsGetPropertySize(
+        IntPtr evfImageRef,
+        uint propertyID,
+        int param,
+        out int dataType,
+        out int size
+    );
+
+    [DllImport(DLL)]
     public static extern EdsError EdsCreateMemoryStream(uint size, out IntPtr stream); // image buffer
 
     [DllImport(DLL)]
@@ -86,7 +104,7 @@ public static class EDSDK
 
     [DllImport(DLL)]
     public static extern EdsError EdsGetLength(IntPtr stream, out uint length); // buffer size
-    # endregion LiveView
+    # endregion Live View
 
     #region Focus Control
 
@@ -94,4 +112,15 @@ public static class EDSDK
     public static extern EdsError EdsSendCommand(IntPtr camera, uint command, int param);
 
     #endregion Focus Control
+
+    #region Property Description
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsGetPropertyDesc(
+        IntPtr camera,
+        uint propertyID,
+        out EdsPropertyDesc propertyDesc
+    );
+
+    #endregion Property Description
 }

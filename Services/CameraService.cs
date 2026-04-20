@@ -292,6 +292,142 @@ public class CameraService
 
     #endregion Focus Control
 
+    #region Camera Settings
+
+    public string GetShutterSpeed()
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.GetShutterSpeed();
+        }
+    }
+
+    public string GetAperture()
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.GetAperture();
+        }
+    }
+
+    public string GetIso()
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.GetIso();
+        }
+    }
+
+    public bool IsAutoIso()
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.IsAutoIso();
+        }
+    }
+
+    #endregion Camera Settings
+
+    #region Property Management
+
+    public bool SetShutterSpeed(uint tvValue)
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.SetProperty(EdsPropertyID.PropID_Tv, tvValue);
+        }
+    }
+
+    public bool SetAperture(uint avValue)
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.SetProperty(EdsPropertyID.PropID_Av, avValue);
+        }
+    }
+
+    public bool SetIso(uint isoValue)
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.SetProperty(EdsPropertyID.PropID_ISOSpeed, isoValue);
+        }
+    }
+
+    public bool IncrementShutterSpeed()
+    {
+        lock (_cameraLock)
+        {
+            if (_sdk.GetNextPropertyValue(EdsPropertyID.PropID_Tv, out var nextValue))
+            {
+                return _sdk.SetProperty(EdsPropertyID.PropID_Tv, nextValue);
+            }
+            return false;
+        }
+    }
+
+    public bool DecrementShutterSpeed()
+    {
+        lock (_cameraLock)
+        {
+            if (_sdk.GetPreviousPropertyValue(EdsPropertyID.PropID_Tv, out var prevValue))
+            {
+                return _sdk.SetProperty(EdsPropertyID.PropID_Tv, prevValue);
+            }
+            return false;
+        }
+    }
+
+    public bool IncrementAperture()
+    {
+        lock (_cameraLock)
+        {
+            if (_sdk.GetNextPropertyValue(EdsPropertyID.PropID_Av, out var nextValue))
+            {
+                return _sdk.SetProperty(EdsPropertyID.PropID_Av, nextValue);
+            }
+            return false;
+        }
+    }
+
+    public bool DecrementAperture()
+    {
+        lock (_cameraLock)
+        {
+            if (_sdk.GetPreviousPropertyValue(EdsPropertyID.PropID_Av, out var prevValue))
+            {
+                return _sdk.SetProperty(EdsPropertyID.PropID_Av, prevValue);
+            }
+            return false;
+        }
+    }
+
+    public bool IncrementIso()
+    {
+        lock (_cameraLock)
+        {
+            if (_sdk.GetNextPropertyValue(EdsPropertyID.PropID_ISOSpeed, out var nextValue))
+            {
+                return _sdk.SetProperty(EdsPropertyID.PropID_ISOSpeed, nextValue);
+            }
+            return false;
+        }
+    }
+
+    public bool DecrementIso()
+    {
+        lock (_cameraLock)
+        {
+            if (_sdk.GetPreviousPropertyValue(EdsPropertyID.PropID_ISOSpeed, out var prevValue))
+            {
+                return _sdk.SetProperty(EdsPropertyID.PropID_ISOSpeed, prevValue);
+            }
+            return false;
+        }
+    }
+
+    #endregion Property Management
+
     #region Histogram
 
     public HistogramData? GetHistogramData()

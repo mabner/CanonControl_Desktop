@@ -44,12 +44,28 @@ public struct EdsCameraRef
     public IntPtr Ref;
 }
 
+[StructLayout(LayoutKind.Sequential)]
+public struct EdsPropertyDesc
+{
+    public int Form;
+    public int Access;
+    public int NumElements;
+
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 128)]
+    public int[] PropDesc;
+}
+
 #region Live View
 
 public static class EdsPropertyID
 {
     public const uint Evf_OutputDevice = 0x00000500;
     public const uint Evf_Mode = 0x00000501;
+
+    // Camera settings properties
+    public const uint PropID_ISOSpeed = 0x00000402;
+    public const uint PropID_Av = 0x00000405; // Aperture Value
+    public const uint PropID_Tv = 0x00000406; // Shutter Speed (Time Value)
     public const uint Evf_HistogramY = 0x00000515;
     public const uint Evf_HistogramR = 0x00000516;
     public const uint Evf_HistogramG = 0x00000517;
