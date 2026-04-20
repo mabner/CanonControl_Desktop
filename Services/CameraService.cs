@@ -76,17 +76,21 @@ public class CameraService
 
     #region Live View
 
-    public async Task StartLiveViewAsync(Action<byte[]> onFrame)
+    public async Task StartLiveViewAsync(Action<byte[]> onFrame, int frameRate = 30)
     {
-        await StartEvfAsync(onFrame);
+        await StartEvfAsync(onFrame, frameRate);
     }
 
-    public async Task StartEvfAsync(Action<byte[]> onFrame)
+    public async Task StartEvfAsync(Action<byte[]> onFrame, int frameRate = 30)
     {
         _cts = new CancellationTokenSource();
         var token = _cts.Token;
 
         _sdk.StartEvf();
+
+        // Calculate delay between frames based on frame rate
+        // frameRate (fps) -> delay (ms) = 1000 / fps
+        int delayMs = 1000 / frameRate;
 
         try
         {
@@ -112,7 +116,7 @@ public class CameraService
                         if (frame != null)
                             onFrame(frame);
 
-                        await Task.Delay(30, token);
+                        await Task.Delay(delayMs, token);
                     }
                 },
                 token

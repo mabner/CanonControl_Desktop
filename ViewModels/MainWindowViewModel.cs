@@ -80,6 +80,9 @@ public partial class MainWindowViewModel : ViewModelBase
     )]
     private bool _isLiveViewActive;
 
+    // Settings
+    private int _liveViewFrameRate = 30;
+
     // camera commands
     [RelayCommand]
     private async Task ConnectCamera()
@@ -240,7 +243,8 @@ public partial class MainWindowViewModel : ViewModelBase
         // apply settings to CameraService
         _cameraService.LiveViewDuringAutoFocus = settings.LiveViewDuringAutoFocus;
 
-        // TODO: apply other settings (LiveViewFrameRate, etc.) when those features are implemented
+        // store live view frame rate for use when starting live view
+        _liveViewFrameRate = settings.LiveViewFrameRate;
     }
 
     // control panel commands
@@ -252,23 +256,30 @@ public partial class MainWindowViewModel : ViewModelBase
             // start live view
             try
             {
+                // reload settings to get the latest frame rate
+                var settings = _settingsService.Load();
+                _liveViewFrameRate = settings.LiveViewFrameRate;
+
                 // start the live view task (it runs in background)
-                var liveViewTask = _cameraService.StartLiveViewAsync(frameData =>
-                {
-                    // convert byte[] to Bitmap and update LiveImage on UI thread
-                    Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                var liveViewTask = _cameraService.StartLiveViewAsync(
+                    frameData =>
                     {
-                        try
+                        // convert byte[] to Bitmap and update LiveImage on UI thread
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
                         {
-                            using var stream = new System.IO.MemoryStream(frameData);
-                            LiveImage = new Bitmap(stream);
-                        }
-                        catch
-                        {
-                            // silently handle bitmap creation errors
-                        }
-                    });
-                });
+                            try
+                            {
+                                using var stream = new System.IO.MemoryStream(frameData);
+                                LiveImage = new Bitmap(stream);
+                            }
+                            catch
+                            {
+                                // silently handle bitmap creation errors
+                            }
+                        });
+                    },
+                    _liveViewFrameRate
+                );
 
                 IsLiveViewActive = true;
 
