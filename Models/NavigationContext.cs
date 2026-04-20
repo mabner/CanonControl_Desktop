@@ -9,6 +9,7 @@ public enum NavigationContext
 {
     RemoteCapture,
     FocusStack,
+    ExposureBracketing,
     TimeLapse,
     Settings,
 }

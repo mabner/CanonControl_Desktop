@@ -160,6 +160,15 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    private void NavigateToExposureBracketing()
+    {
+        UnsubscribeFromCurrentViewModel();
+        CurrentContext = NavigationContext.ExposureBracketing;
+        CurrentSidePanelViewModel = new ExposureBracketingViewModel(_cameraService);
+        SubscribeToCurrentViewModel();
+    }
+
+    [RelayCommand]
     private void NavigateToTimeLapse()
     {
         UnsubscribeFromCurrentViewModel();
@@ -194,6 +203,10 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             fsvm.PropertyChanged += OnFeatureViewModelPropertyChanged;
         }
+        else if (CurrentSidePanelViewModel is ExposureBracketingViewModel ebvm)
+        {
+            ebvm.PropertyChanged += OnFeatureViewModelPropertyChanged;
+        }
         else if (CurrentSidePanelViewModel is TimeLapseViewModel tlvm)
         {
             tlvm.PropertyChanged += OnFeatureViewModelPropertyChanged;
@@ -211,6 +224,10 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             fsvm.PropertyChanged -= OnFeatureViewModelPropertyChanged;
         }
+        else if (CurrentSidePanelViewModel is ExposureBracketingViewModel ebvm)
+        {
+            ebvm.PropertyChanged -= OnFeatureViewModelPropertyChanged;
+        }
         else if (CurrentSidePanelViewModel is TimeLapseViewModel tlvm)
         {
             tlvm.PropertyChanged -= OnFeatureViewModelPropertyChanged;
@@ -224,6 +241,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         if (
             e.PropertyName == nameof(FocusStackViewModel.IsRunning)
+            || e.PropertyName == nameof(ExposureBracketingViewModel.IsRunning)
             || e.PropertyName == nameof(TimeLapseViewModel.IsRunning)
         )
         {
@@ -441,8 +459,11 @@ public partial class MainWindowViewModel : ViewModelBase
             return CurrentContext switch
             {
                 NavigationContext.RemoteCapture => "Capture",
-                NavigationContext.FocusStack => IsStackRunning ? "Stop Stack" : "Start Stack",
-                NavigationContext.TimeLapse => IsLapseRunning ? "Stop Lapse" : "Start Lapse",
+                NavigationContext.FocusStack => IsStackRunning ? "Stop\nStack" : "Start\nStack",
+                NavigationContext.ExposureBracketing => IsBracketingRunning
+                    ? "Stop\nBracketing"
+                    : "Start\nBracketing",
+                NavigationContext.TimeLapse => IsLapseRunning ? "Stop\nLapse" : "Start\nLapse",
                 NavigationContext.Settings => "Capture",
                 _ => "Capture",
             };
@@ -478,6 +499,20 @@ public partial class MainWindowViewModel : ViewModelBase
                     else
                     {
                         await fsvm.StartStack();
+                    }
+                }
+                break;
+
+            case NavigationContext.ExposureBracketing:
+                if (CurrentSidePanelViewModel is ExposureBracketingViewModel ebvm)
+                {
+                    if (ebvm.IsRunning)
+                    {
+                        ebvm.StopBracketing();
+                    }
+                    else
+                    {
+                        await ebvm.StartBracketing();
                     }
                 }
                 break;
