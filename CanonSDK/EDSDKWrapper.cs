@@ -60,9 +60,35 @@ public class EDSDKWrapper
             if (EDSDK.EdsOpenSession(_camera) != EdsError.EDS_ERR_OK)
                 return false;
 
-            // register object event handler for image download
-            _objectEventHandler = OnObjectEvent;
-            EDSDK.EdsSetObjectEventHandler(_camera, 0xFFFFFFFF, _objectEventHandler, IntPtr.Zero);
+            // register object event handler for image download (after session is open)
+            // run on a background thread to avoid blocking
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                try
+                {
+                    _objectEventHandler = OnObjectEvent;
+                    var eventResult = EDSDK.EdsSetObjectEventHandler(
+                        _camera,
+                        0xFFFFFFFF,
+                        _objectEventHandler,
+                        IntPtr.Zero
+                    );
+                    if (eventResult != EdsError.EDS_ERR_OK)
+                    {
+                        Console.WriteLine(
+                            $"Warning: Failed to register object event handler: {eventResult}"
+                        );
+                    }
+                    else
+                    {
+                        Console.WriteLine("Object event handler registered successfully");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error registering event handler: {ex.Message}");
+                }
+            });
 
             return true;
         }
