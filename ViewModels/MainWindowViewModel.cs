@@ -25,9 +25,9 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly CameraService _cameraService;
     private readonly SettingsService _settingsService;
 
-    public MainWindowViewModel()
+    public MainWindowViewModel(CameraService cameraService)
     {
-        _cameraService = new CameraService();
+        _cameraService = cameraService;
         _settingsService = new SettingsService();
 
         // load and apply settings
