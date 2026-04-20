@@ -66,6 +66,9 @@ public class EDSDKWrapper
             {
                 try
                 {
+                    // small delay to ensure session is fully established
+                    System.Threading.Thread.Sleep(100);
+
                     _objectEventHandler = OnObjectEvent;
                     var eventResult = EDSDK.EdsSetObjectEventHandler(
                         _camera,
@@ -113,9 +116,15 @@ public class EDSDKWrapper
     {
         if (_camera != IntPtr.Zero)
         {
+            // note: We don't explicitly unregister the event handler because:
+            // 1. EdsCloseSession will clean up event handlers automatically
+            // 2. passing null to EdsSetObjectEventHandler may not work correctly in P/Invoke
+            // 3. the handler checks if _camera is valid before processing
+
             EDSDK.EdsCloseSession(_camera);
             EDSDK.EdsRelease(_camera);
             _camera = IntPtr.Zero;
+            _objectEventHandler = null; // clear the reference to allow GC
         }
 
         EDSDK.EdsTerminateSDK();
@@ -693,12 +702,27 @@ public class EDSDKWrapper
 
     private uint OnObjectEvent(uint inEvent, IntPtr inRef, IntPtr inContext)
     {
+        // defensive check: if camera is already closed, just release the reference and return
+        if (_camera == IntPtr.Zero)
+        {
+            Console.WriteLine("OnObjectEvent called but camera is closed - releasing reference");
+            if (inRef != IntPtr.Zero)
+            {
+                EDSDK.EdsRelease(inRef);
+            }
+            return (uint)EdsError.EDS_ERR_OK;
+        }
+
+        Console.WriteLine($"OnObjectEvent called: event=0x{inEvent:X8}, ref={inRef}");
+
         if (inEvent == EdsObjectEvent.DirItemRequestTransfer)
         {
+            Console.WriteLine("DirItemRequestTransfer event detected - starting download");
             DownloadImage(inRef);
         }
         else if (inRef != IntPtr.Zero)
         {
+            Console.WriteLine($"Other event (0x{inEvent:X8}) - releasing reference");
             EDSDK.EdsRelease(inRef);
         }
         return (uint)EdsError.EDS_ERR_OK;

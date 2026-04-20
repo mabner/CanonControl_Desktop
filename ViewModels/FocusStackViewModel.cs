@@ -49,6 +49,9 @@ public partial class FocusStackViewModel : ViewModelBase
 
         try
         {
+            // small delay to ensure UI is fully updated before starting
+            await Task.Delay(100, token);
+
             for (int i = 1; i <= NumberOfShots && !token.IsCancellationRequested; i++)
             {
                 CurrentShot = i;
@@ -83,7 +86,7 @@ public partial class FocusStackViewModel : ViewModelBase
         {
             Status = $"Error: {ex.Message}";
             // log full exception for debugging
-            System.Console.WriteLine($"Focus stack error: {ex}");
+            Console.WriteLine($"Focus stack error: {ex}");
         }
         finally
         {

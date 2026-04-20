@@ -57,6 +57,7 @@
         <ComboBoxItem Content="1 stop" />
         <ComboBoxItem Content="1.5 stops" />
         <ComboBoxItem Content="2 stops" />
+        <ComboBoxItem Content="3 stops" />
       </ComboBox>
       <TextBlock Text="Exposure change between shots"
                  FontSize="12"
