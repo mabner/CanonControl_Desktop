@@ -27,6 +27,13 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly SettingsService _settingsService;
     private System.Threading.CancellationTokenSource? _connectionPollingCts;
 
+    // cached panel ViewModels — created once and reused so user-configured values persist during the session
+    private RemoteCaptureViewModel? _remoteCaptureViewModel;
+    private FocusStackViewModel? _focusStackViewModel;
+    private ExposureBracketingViewModel? _exposureBracketingViewModel;
+    private TimeLapseViewModel? _timeLapseViewModel;
+    private SettingsViewModel? _settingsViewModel;
+
     public MainWindowViewModel(CameraService cameraService)
     {
         _cameraService = cameraService;
@@ -244,43 +251,59 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         UnsubscribeFromCurrentViewModel();
         CurrentContext = NavigationContext.RemoteCapture;
-        CurrentSidePanelViewModel = new RemoteCaptureViewModel(_cameraService);
+        _remoteCaptureViewModel ??= new RemoteCaptureViewModel(_cameraService);
+        CurrentSidePanelViewModel = _remoteCaptureViewModel;
         SubscribeToCurrentViewModel();
     }
 
     [RelayCommand]
     private void NavigateToFocusStack()
     {
+        if (CurrentContext == NavigationContext.FocusStack && CurrentSidePanelViewModel != null)
+            return;
         UnsubscribeFromCurrentViewModel();
         CurrentContext = NavigationContext.FocusStack;
-        CurrentSidePanelViewModel = new FocusStackViewModel(_cameraService);
+        _focusStackViewModel ??= new FocusStackViewModel(_cameraService);
+        CurrentSidePanelViewModel = _focusStackViewModel;
         SubscribeToCurrentViewModel();
     }
 
     [RelayCommand]
     private void NavigateToExposureBracketing()
     {
+        if (
+            CurrentContext == NavigationContext.ExposureBracketing
+            && CurrentSidePanelViewModel != null
+        )
+            return;
         UnsubscribeFromCurrentViewModel();
         CurrentContext = NavigationContext.ExposureBracketing;
-        CurrentSidePanelViewModel = new ExposureBracketingViewModel(_cameraService);
+        _exposureBracketingViewModel ??= new ExposureBracketingViewModel(_cameraService);
+        CurrentSidePanelViewModel = _exposureBracketingViewModel;
         SubscribeToCurrentViewModel();
     }
 
     [RelayCommand]
     private void NavigateToTimeLapse()
     {
+        if (CurrentContext == NavigationContext.TimeLapse && CurrentSidePanelViewModel != null)
+            return;
         UnsubscribeFromCurrentViewModel();
         CurrentContext = NavigationContext.TimeLapse;
-        CurrentSidePanelViewModel = new TimeLapseViewModel(_cameraService);
+        _timeLapseViewModel ??= new TimeLapseViewModel(_cameraService);
+        CurrentSidePanelViewModel = _timeLapseViewModel;
         SubscribeToCurrentViewModel();
     }
 
     [RelayCommand]
     private void NavigateToSettings()
     {
+        if (CurrentContext == NavigationContext.Settings && CurrentSidePanelViewModel != null)
+            return;
         UnsubscribeFromCurrentViewModel();
         CurrentContext = NavigationContext.Settings;
-        CurrentSidePanelViewModel = new SettingsViewModel();
+        _settingsViewModel ??= new SettingsViewModel();
+        CurrentSidePanelViewModel = _settingsViewModel;
         SubscribeToCurrentViewModel();
     }
 
