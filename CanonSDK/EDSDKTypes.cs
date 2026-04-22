@@ -151,6 +151,7 @@ public static class EdsEvfHistogramStatus
 
 public static class EdsObjectEvent
 {
+    public const uint All = 0x00000200;
     public const uint DirItemRequestTransfer = 0x00000202;
 }
 

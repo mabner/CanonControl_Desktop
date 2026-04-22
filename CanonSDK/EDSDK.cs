@@ -84,7 +84,7 @@ public static class EDSDK
     public static extern EdsError EdsSetObjectEventHandler(
         IntPtr camera,
         uint inEvent,
-        EdsObjectEventHandler inObjectEventHandler,
+        EdsObjectEventHandler? inObjectEventHandler,
         IntPtr inContext
     );
 

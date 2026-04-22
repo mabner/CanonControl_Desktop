@@ -54,12 +54,43 @@ public class EDSDKWrapper
             if (EDSDK.EdsGetChildCount(cameraList, out count) != EdsError.EDS_ERR_OK || count == 0)
                 return false;
 
+            // get camera reference
             if (EDSDK.EdsGetChildAtIndex(cameraList, 0, out _camera) != EdsError.EDS_ERR_OK)
                 return false;
 
-            if (EDSDK.EdsOpenSession(_camera) != EdsError.EDS_ERR_OK)
-                return false;
+            // create event handler delegate BEFORE opening session
+            // store as instance field to prevent garbage collection
+            _objectEventHandler = new EDSDK.EdsObjectEventHandler(OnObjectEvent);
 
+            // register event handler BEFORE opening session
+            // this is the correct sequence per Canon's sample code
+            var err = EDSDK.EdsSetObjectEventHandler(
+                _camera,
+                EdsObjectEvent.All,
+                _objectEventHandler,
+                IntPtr.Zero
+            );
+            if (err != EdsError.EDS_ERR_OK)
+            {
+                Console.WriteLine($"Failed to register event handler: {err}");
+                EDSDK.EdsRelease(_camera);
+                _camera = IntPtr.Zero;
+                _objectEventHandler = null;
+                return false;
+            }
+
+            // NOW open session (after event handler registration)
+            if (EDSDK.EdsOpenSession(_camera) != EdsError.EDS_ERR_OK)
+            {
+                // unregister handler on failure
+                EDSDK.EdsSetObjectEventHandler(_camera, EdsObjectEvent.All, null, IntPtr.Zero);
+                EDSDK.EdsRelease(_camera);
+                _camera = IntPtr.Zero;
+                _objectEventHandler = null;
+                return false;
+            }
+
+            Console.WriteLine("Camera connected successfully with event handlers registered");
             return true;
         }
         finally
@@ -83,10 +114,12 @@ public class EDSDKWrapper
     {
         if (_camera != IntPtr.Zero)
         {
-            // note: We don't explicitly unregister the event handler because:
-            // 1. EdsCloseSession will clean up event handlers automatically
-            // 2. passing null to EdsSetObjectEventHandler may not work correctly in P/Invoke
-            // 3. the handler checks if _camera is valid before processing
+            // unregister event handler before closing session
+            if (_objectEventHandler != null)
+            {
+                EDSDK.EdsSetObjectEventHandler(_camera, EdsObjectEvent.All, null, IntPtr.Zero);
+                _objectEventHandler = null;
+            }
 
             EDSDK.EdsCloseSession(_camera);
             EDSDK.EdsRelease(_camera);
