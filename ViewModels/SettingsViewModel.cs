@@ -12,10 +12,12 @@ namespace CanonControl.ViewModels;
 public partial class SettingsViewModel : ViewModelBase
 {
     private readonly SettingsService _settingsService;
+    private readonly CameraService _cameraService;
     private readonly AppSettings _settings;
 
-    public SettingsViewModel()
+    public SettingsViewModel(CameraService cameraService)
     {
+        _cameraService = cameraService;
         _settingsService = new SettingsService();
         _settings = _settingsService.Load();
 
@@ -25,10 +27,22 @@ public partial class SettingsViewModel : ViewModelBase
         _liveViewFrameRate = _settings.LiveViewFrameRate;
         _liveViewDuringAutoFocus = _settings.LiveViewDuringAutoFocus;
         _connectionTimeout = _settings.ConnectionTimeout;
+        _saveDestinationIndex = SaveDestinationToIndex(_settings.SaveDestination);
+
+        // Keep active runtime session aligned with persisted settings when opening Settings panel.
+        _cameraService.SavePath = _savePath;
+        _cameraService.SaveDestination = _settings.SaveDestination;
+        _cameraService.LiveViewDuringAutoFocus = _liveViewDuringAutoFocus;
     }
 
     [ObservableProperty]
     private string _savePath = string.Empty;
+
+    partial void OnSavePathChanged(string value)
+    {
+        // apply immediately so next capture uses the selected folder even before pressing Save.
+        _cameraService.SavePath = value;
+    }
 
     [ObservableProperty]
     private bool _autoDownload = true;
@@ -41,6 +55,22 @@ public partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private int _connectionTimeout = 10;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasHostSaveDestination))]
+    private int _saveDestinationIndex = 0;
+
+    partial void OnSaveDestinationIndexChanged(int value)
+    {
+        _cameraService.SaveDestination = IndexToSaveDestination(value);
+    }
+
+    // Human-readable labels for the save destination ComboBox
+    public List<string> SaveDestinationOptions { get; } =
+        new() { "Camera only", "PC only", "Camera + PC" };
+
+    public bool HasHostSaveDestination =>
+        IndexToSaveDestination(SaveDestinationIndex) != SaveDestination.Camera;
 
     // display the settings file path for user reference
     public string SettingsFilePath => _settingsService.GetSettingsPath();
@@ -97,11 +127,34 @@ public partial class SettingsViewModel : ViewModelBase
         _settings.LiveViewFrameRate = LiveViewFrameRate;
         _settings.LiveViewDuringAutoFocus = LiveViewDuringAutoFocus;
         _settings.ConnectionTimeout = ConnectionTimeout;
+        _settings.SaveDestination = IndexToSaveDestination(SaveDestinationIndex);
 
         // persist to file
         _settingsService.Save(_settings);
+
+        // apply immediately to the active runtime session (no reconnect required)
+        _cameraService.SavePath = SavePath;
+        _cameraService.SaveDestination = _settings.SaveDestination;
+        _cameraService.LiveViewDuringAutoFocus = LiveViewDuringAutoFocus;
     }
 
     // get current settings (for other components to read)
     public AppSettings GetCurrentSettings() => _settings;
+
+    private static int SaveDestinationToIndex(SaveDestination d) =>
+        d switch
+        {
+            SaveDestination.Camera => 0,
+            SaveDestination.Host => 1,
+            SaveDestination.Both => 2,
+            _ => 0,
+        };
+
+    private static SaveDestination IndexToSaveDestination(int index) =>
+        index switch
+        {
+            1 => SaveDestination.Host,
+            2 => SaveDestination.Both,
+            _ => SaveDestination.Camera,
+        };
 }

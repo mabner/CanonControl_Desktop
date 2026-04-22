@@ -9,6 +9,8 @@ public class AppSettings
 {
     public string SavePath { get; set; } = string.Empty;
 
+    public SaveDestination SaveDestination { get; set; } = SaveDestination.Camera;
+
     public bool AutoDownload { get; set; } = false;
 
     public int LiveViewFrameRate { get; set; } = 30; // default to 30 FPS

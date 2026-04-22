@@ -20,10 +20,10 @@ namespace CanonControl.CanonSDK;
 public class EDSDKWrapper
 {
     private IntPtr _camera;
-
     private EDSDK.EdsObjectEventHandler? _objectEventHandler;
 
     public string SavePath { get; set; } = string.Empty;
+    public SaveDestination SaveDestination { get; set; } = SaveDestination.Camera;
 
     #region Initialization and Camera Management
 
@@ -89,6 +89,7 @@ public class EDSDKWrapper
                 _objectEventHandler = null;
                 return false;
             }
+            ApplySaveDestinationToCamera();
 
             Console.WriteLine("Camera connected successfully with event handlers registered");
             return true;
@@ -96,6 +97,54 @@ public class EDSDKWrapper
         finally
         {
             EDSDK.EdsRelease(cameraList);
+        }
+    }
+
+    public void ApplySaveDestination()
+    {
+        if (_camera != IntPtr.Zero)
+            ApplySaveDestinationToCamera();
+    }
+
+    private void ApplySaveDestinationToCamera()
+    {
+        // use this.SaveDestination to disambiguate the property from the type.
+        var dest = this.SaveDestination;
+        var saveToErr = EDSDK.EdsSetPropertyData(
+            _camera,
+            EdsPropertyID.PropID_SaveTo,
+            0,
+            sizeof(uint),
+            (uint)dest
+        );
+
+        if (saveToErr == EdsError.EDS_ERR_OK)
+        {
+            if (dest != SaveDestination.Camera)
+            {
+                // EdsSetCapacity is required when the host is a save target.
+                // report a large free-space value (~2 GB).
+                var capacity = new EdsCapacity
+                {
+                    NumberOfFreeClusters = 0x7FFFFFFF,
+                    BytesPerSector = 0x1000,
+                    Reset = 1,
+                };
+                var capErr = EDSDK.EdsSetCapacity(_camera, capacity);
+                Console.WriteLine(
+                    $"Camera configured: SaveTo={dest}, SetCapacity result: {capErr}"
+                );
+            }
+            else
+            {
+                Console.WriteLine($"Camera configured: SaveTo={dest}");
+            }
+        }
+        else
+        {
+            Console.WriteLine(
+                $"Warning: Failed to set PropID_SaveTo (err={saveToErr}). Images may not download automatically."
+            );
         }
     }
 
@@ -774,24 +823,56 @@ public class EDSDKWrapper
     {
         try
         {
+            if (this.SaveDestination == SaveDestination.Camera)
+            {
+                Console.WriteLine(
+                    "[Download] Skipping host download because SaveDestination=Camera."
+                );
+                EDSDK.EdsRelease(directoryItem);
+                return;
+            }
+
             // get file info
             var err = EDSDK.EdsGetDirectoryItemInfo(directoryItem, out var dirItemInfo);
             if (err != EdsError.EDS_ERR_OK)
             {
-                Console.WriteLine($"Failed to get directory item info: {err}");
+                Console.WriteLine($"[Download] Failed to get directory item info: {err}");
+                EDSDK.EdsRelease(directoryItem);
+                return;
+            }
+
+            // validate and prepare save path
+            if (string.IsNullOrWhiteSpace(SavePath))
+            {
+                Console.WriteLine(
+                    $"[Download] ERROR: SavePath is empty or null. Image '{dirItemInfo.szFileName}' cannot be downloaded."
+                );
                 EDSDK.EdsRelease(directoryItem);
                 return;
             }
 
             // create save directory if needed
-            if (!string.IsNullOrEmpty(SavePath) && !System.IO.Directory.Exists(SavePath))
+            if (!System.IO.Directory.Exists(SavePath))
             {
-                System.IO.Directory.CreateDirectory(SavePath);
+                try
+                {
+                    System.IO.Directory.CreateDirectory(SavePath);
+                    Console.WriteLine($"[Download] Created directory: {SavePath}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(
+                        $"[Download] Failed to create directory '{SavePath}': {ex.Message}"
+                    );
+                    EDSDK.EdsRelease(directoryItem);
+                    return;
+                }
             }
 
             // build full file path
             string filePath = System.IO.Path.Combine(SavePath, dirItemInfo.szFileName);
-            Console.WriteLine($"Downloading image to: {filePath}");
+            Console.WriteLine($"[Download] Target path: {filePath}");
+            Console.WriteLine($"[Download] File size: {dirItemInfo.Size} bytes");
 
             // create file stream
             err = EDSDK.EdsCreateFileStream(
@@ -802,7 +883,9 @@ public class EDSDKWrapper
             );
             if (err != EdsError.EDS_ERR_OK)
             {
-                Console.WriteLine($"Failed to create file stream: {err}");
+                Console.WriteLine(
+                    $"[Download] Failed to create file stream at '{filePath}': {err}"
+                );
                 EDSDK.EdsRelease(directoryItem);
                 return;
             }
@@ -811,7 +894,7 @@ public class EDSDKWrapper
             err = EDSDK.EdsDownload(directoryItem, dirItemInfo.Size, stream);
             if (err != EdsError.EDS_ERR_OK)
             {
-                Console.WriteLine($"Failed to download image: {err}");
+                Console.WriteLine($"[Download] Failed to download image: {err}");
                 EDSDK.EdsRelease(stream);
                 EDSDK.EdsRelease(directoryItem);
                 return;
@@ -821,20 +904,31 @@ public class EDSDKWrapper
             err = EDSDK.EdsDownloadComplete(directoryItem);
             if (err != EdsError.EDS_ERR_OK)
             {
-                Console.WriteLine($"Failed to complete download: {err}");
+                Console.WriteLine($"[Download] Failed to complete download: {err}");
             }
 
             // release resources
             EDSDK.EdsRelease(stream);
             EDSDK.EdsRelease(directoryItem);
 
-            Console.WriteLine($"Successfully downloaded: {dirItemInfo.szFileName}");
+            // verify file exists and log final status
+            if (System.IO.File.Exists(filePath))
+            {
+                var fileInfo = new System.IO.FileInfo(filePath);
+                Console.WriteLine(
+                    $"[Download] ✓ Successfully saved: {dirItemInfo.szFileName} ({fileInfo.Length} bytes) to {SavePath}"
+                );
+            }
+            else
+            {
+                Console.WriteLine($"[Download] ✗ File not found after download: {filePath}");
+            }
         }
         catch (Exception ex)
         {
             // log error but don't crash
-            Console.WriteLine($"Download error: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            Console.WriteLine($"[Download] Exception: {ex.Message}");
+            Console.WriteLine($"[Download] Stack trace: {ex.StackTrace}");
             if (directoryItem != IntPtr.Zero)
             {
                 EDSDK.EdsRelease(directoryItem);

@@ -48,8 +48,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // navigation state
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ContextCaptureLabel))]
-    private NavigationContext _currentContext = NavigationContext.RemoteCapture;
+    [NotifyPropertyChangedFor(nameof(ContextCaptureLabel))].    private NavigationContext _currentContext = NavigationContext.RemoteCapture;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ContextCaptureLabel))]
@@ -116,15 +115,18 @@ public partial class MainWindowViewModel : ViewModelBase
             System.Diagnostics.Debug.WriteLine("ConnectCamera command started");
             Status = "Connecting...";
 
-            // load current settings to get connection timeout and save path
+            // load current settings to get connection timeout and capture destination
             var settings = _settingsService.Load();
             System.Diagnostics.Debug.WriteLine(
                 $"Settings loaded, timeout: {settings.ConnectionTimeout}"
             );
 
-            // set save path on camera service before connecting
+            // apply runtime settings before connecting
             _cameraService.SavePath = settings.SavePath;
-            System.Diagnostics.Debug.WriteLine($"Save path set to: {settings.SavePath}");
+            _cameraService.SaveDestination = settings.SaveDestination;
+            System.Diagnostics.Debug.WriteLine(
+                $"Save path set to: {settings.SavePath}, destination: {settings.SaveDestination}"
+            );
 
             var result = await _cameraService.ConnectAsync(settings.ConnectionTimeout);
             System.Diagnostics.Debug.WriteLine($"Connection result: {result}");
@@ -201,8 +203,9 @@ public partial class MainWindowViewModel : ViewModelBase
                         {
                             var settings = _settingsService.Load();
 
-                            // set save path before connecting
+                            // apply runtime settings before connecting
                             _cameraService.SavePath = settings.SavePath;
+                            _cameraService.SaveDestination = settings.SaveDestination;
 
                             var result = await _cameraService.ConnectAsync(
                                 settings.ConnectionTimeout
@@ -302,7 +305,7 @@ public partial class MainWindowViewModel : ViewModelBase
             return;
         UnsubscribeFromCurrentViewModel();
         CurrentContext = NavigationContext.Settings;
-        _settingsViewModel ??= new SettingsViewModel();
+        _settingsViewModel ??= new SettingsViewModel(_cameraService);
         CurrentSidePanelViewModel = _settingsViewModel;
         SubscribeToCurrentViewModel();
     }
@@ -410,6 +413,8 @@ public partial class MainWindowViewModel : ViewModelBase
         var settings = _settingsService.Load();
 
         // apply settings to CameraService
+        _cameraService.SavePath = settings.SavePath;
+        _cameraService.SaveDestination = settings.SaveDestination;
         _cameraService.LiveViewDuringAutoFocus = settings.LiveViewDuringAutoFocus;
 
         // store live view frame rate for use when starting live view

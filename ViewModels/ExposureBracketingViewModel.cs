@@ -59,6 +59,10 @@ public partial class ExposureBracketingViewModel : ViewModelBase
         if (IsRunning)
             return;
 
+        // validate save path before attempting capture
+        if (!ValidateSavePath())
+            return;
+
         var propertyId =
             ExposureParameterIndex == 0 ? EdsPropertyID.PropID_Tv : EdsPropertyID.PropID_ISOSpeed;
         uint? baseExposureValue = null;
@@ -146,6 +150,42 @@ public partial class ExposureBracketingViewModel : ViewModelBase
 
             IsRunning = false;
         }
+    }
+
+    private bool ValidateSavePath()
+    {
+        // camera-only mode: images stay on the card, no PC path needed.
+        if (_cameraService.SaveDestination == CanonControl.Models.SaveDestination.Camera)
+        {
+            return true;
+        }
+
+        var savePath = _cameraService.SavePath;
+
+        if (string.IsNullOrWhiteSpace(savePath))
+        {
+            Status = "Error: Save path is not set. Please configure in Settings.";
+            Console.WriteLine("[ExposureBracketing] Error: SavePath is empty");
+            return false;
+        }
+
+        if (!System.IO.Directory.Exists(savePath))
+        {
+            try
+            {
+                System.IO.Directory.CreateDirectory(savePath);
+                Console.WriteLine($"[ExposureBracketing] Created save directory: {savePath}");
+            }
+            catch (Exception ex)
+            {
+                Status = $"Error: Cannot create save path: {ex.Message}";
+                Console.WriteLine($"[ExposureBracketing] Error creating directory: {ex.Message}");
+                return false;
+            }
+        }
+
+        Console.WriteLine($"[ExposureBracketing] Save path validated: {savePath}");
+        return true;
     }
 
     private double[] BuildExposureOffsets()

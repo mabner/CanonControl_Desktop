@@ -52,7 +52,10 @@ public partial class RemoteCaptureViewModel : ViewModelBase
     [ObservableProperty]
     private int _compositionRotation = 0;
 
-    // ComboBox index properties for MVVM binding
+    [ObservableProperty]
+    private string _status = string.Empty;
+
+    // comboBox index properties for MVVM binding
     public int DelaySecondsIndex
     {
         get =>
@@ -100,6 +103,10 @@ public partial class RemoteCaptureViewModel : ViewModelBase
 
     public async Task TakeSinglePicture()
     {
+        // validate save path before attempting capture
+        if (!ValidateSavePath())
+            return;
+
         if (DelaySeconds > 0)
         {
             // display countdown in UI
@@ -112,6 +119,40 @@ public partial class RemoteCaptureViewModel : ViewModelBase
         }
 
         _cameraService.TakePicture();
+    }
+
+    private bool ValidateSavePath()
+    {
+        // camera-only mode: images stay on the card, no PC path needed
+        if (_cameraService.SaveDestination == Models.SaveDestination.Camera)
+            return true;
+
+        var savePath = _cameraService.SavePath;
+
+        if (string.IsNullOrWhiteSpace(savePath))
+        {
+            Status = "Error: Save path is not set. Please configure in Settings.";
+            Console.WriteLine("[RemoteCapture] Error: SavePath is empty");
+            return false;
+        }
+
+        if (!System.IO.Directory.Exists(savePath))
+        {
+            try
+            {
+                System.IO.Directory.CreateDirectory(savePath);
+                Console.WriteLine($"[RemoteCapture] Created save directory: {savePath}");
+            }
+            catch (Exception ex)
+            {
+                Status = $"Error: Cannot create save path: {ex.Message}";
+                Console.WriteLine($"[RemoteCapture] Error creating directory: {ex.Message}");
+                return false;
+            }
+        }
+
+        Console.WriteLine($"[RemoteCapture] Save path validated: {savePath}");
+        return true;
     }
 
     [RelayCommand]

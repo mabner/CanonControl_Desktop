@@ -12,19 +12,24 @@
                 <Grid ColumnDefinitions="*,Auto">
                         <TextBox Grid.Column="0"
                                  Text="{Binding SavePath}"
+                                 IsEnabled="{Binding HasHostSaveDestination}"
                                  PlaceholderText="Enter save path..."
                                  MinHeight="44" />
                         <Button Grid.Column="1"
                                 Content="Browse"
                                 Command="{Binding BrowseSavePathCommand}"
+                                IsEnabled="{Binding HasHostSaveDestination}"
                                 MinWidth="80" MinHeight="44"
                                 Margin="4,0,0,0" />
                 </Grid>
 
-                <!-- Auto Download -->
-                <CheckBox Content="Auto Download Images"
-                          IsChecked="{Binding AutoDownload}"
-                          MinHeight="44" />
+                <!-- Save Destination -->
+                <TextBlock Text="Save Images To" FontWeight="Bold" />
+                <ComboBox ItemsSource="{Binding SaveDestinationOptions}"
+                          SelectedIndex="{Binding SaveDestinationIndex}"
+                          MinHeight="44"
+                          HorizontalAlignment="Stretch"
+                          ToolTip.Tip="Camera only: saves to memory card (no PC download). PC only: downloads to PC, nothing on card. Camera + PC: saves to card and downloads to PC." />
 
                 <!-- Live View Frame Rate -->
                 <TextBlock Text="Live View Frame Rate (fps)" FontWeight="Bold" />

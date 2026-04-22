@@ -38,6 +38,10 @@ public partial class TimeLapseViewModel : ViewModelBase
         if (IsRunning)
             return;
 
+        // validate save path before attempting capture
+        if (!ValidateSavePath())
+            return;
+
         IsRunning = true;
         CurrentShot = 0;
         Status = "Running...";
@@ -77,6 +81,40 @@ public partial class TimeLapseViewModel : ViewModelBase
             _cancellationTokenSource?.Dispose();
             _cancellationTokenSource = null;
         }
+    }
+
+    private bool ValidateSavePath()
+    {
+        // camera-only mode: images stay on the card, no PC path needed
+        if (_cameraService.SaveDestination == CanonControl.Models.SaveDestination.Camera)
+            return true;
+
+        var savePath = _cameraService.SavePath;
+
+        if (string.IsNullOrWhiteSpace(savePath))
+        {
+            Status = "Error: Save path is not set. Please configure in Settings.";
+            Console.WriteLine("[TimeLapse] Error: SavePath is empty");
+            return false;
+        }
+
+        if (!System.IO.Directory.Exists(savePath))
+        {
+            try
+            {
+                System.IO.Directory.CreateDirectory(savePath);
+                Console.WriteLine($"[TimeLapse] Created save directory: {savePath}");
+            }
+            catch (Exception ex)
+            {
+                Status = $"Error: Cannot create save path: {ex.Message}";
+                Console.WriteLine($"[TimeLapse] Error creating directory: {ex.Message}");
+                return false;
+            }
+        }
+
+        Console.WriteLine($"[TimeLapse] Save path validated: {savePath}");
+        return true;
     }
 
     public void StopLapse()

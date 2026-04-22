@@ -34,6 +34,19 @@ public class CameraService
         set => _sdk.SavePath = value;
     }
 
+    public SaveDestination SaveDestination
+    {
+        get => _sdk.SaveDestination;
+        set
+        {
+            lock (_cameraLock)
+            {
+                _sdk.SaveDestination = value;
+                _sdk.ApplySaveDestination(); // update camera immediately if already connected
+            }
+        }
+    }
+
     #endregion Settings
 
     #region Connect and Startup
