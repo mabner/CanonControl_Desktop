@@ -23,6 +23,7 @@ public class CameraService
     private readonly object _cameraLock = new();
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _focusCts;
+    private Task? _liveViewTask;
     private volatile bool _isEvfDownloadPaused = false;
 
     #region Settings
@@ -68,12 +69,25 @@ public class CameraService
 
     public void Disconnect()
     {
+        // stop live view and wait for task to complete
         StopLiveView();
 
-        if (_sdk != null)
+        // wait for live view task to fully complete before closing SDK
+        // this prevents deadlock from closing while task holds _cameraLock
+        if (_liveViewTask != null && !_liveViewTask.IsCompleted)
         {
-            _sdk.Close();
+            try
+            {
+                // wait up to 1 second for task to complete
+                _liveViewTask.Wait(TimeSpan.FromSeconds(1));
+            }
+            catch (AggregateException)
+            {
+                // task was cancelled, which is expected
+            }
+            _liveViewTask = null;
         }
+        _sdk.Close();
     }
 
     public string GetCameraName()
@@ -103,7 +117,7 @@ public class CameraService
 
         try
         {
-            await Task.Run(
+            _liveViewTask = Task.Run(
                 async () =>
                 {
                     while (!token.IsCancellationRequested)
@@ -130,6 +144,7 @@ public class CameraService
                 },
                 token
             );
+            await _liveViewTask;
         }
         catch (OperationCanceledException)
         {
@@ -144,6 +159,7 @@ public class CameraService
 
     public void EndEvf()
     {
+        // cancel the live view task first
         if (_cts != null && !_cts.IsCancellationRequested)
         {
             _cts.Cancel();
@@ -151,12 +167,24 @@ public class CameraService
             _cts = null;
         }
 
+        // stop any ongoing focus operations
         StopFocus();
         SetEvfAutoFocus(false);
 
+        // wait a bit for the live view task to exit its loop and release the lock
+        Thread.Sleep(100);
+
+        // now safe to end EVF
         lock (_cameraLock)
         {
             _sdk.EndEvf();
+        }
+
+        // clean up cancellation token source
+        if (_cts != null)
+        {
+            _cts.Dispose();
+            _cts = null;
         }
     }
     #endregion Live View
@@ -297,9 +325,35 @@ public class CameraService
 
     public void TakePicture()
     {
-        lock (_cameraLock)
+        // Temporarily pause live view downloads to reduce lock contention
+        _isEvfDownloadPaused = true;
+
+        try
         {
-            _sdk.TakePicture();
+            Console.WriteLine("[TakePicture] Acquiring lock...");
+            lock (_cameraLock)
+            {
+                Console.WriteLine("[TakePicture] Lock acquired, calling SDK...");
+                _sdk.TakePicture();
+                Console.WriteLine("[TakePicture] SDK call completed");
+            }
+            Console.WriteLine("[TakePicture] Lock released");
+
+            // Wait for camera to process the shot and trigger download
+            // Don't hold the lock during this wait
+            Thread.Sleep(200);
+            Console.WriteLine("[TakePicture] Wait completed");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[TakePicture] Error: {ex.Message}");
+            throw;
+        }
+        finally
+        {
+            // Resume live view downloads
+            _isEvfDownloadPaused = false;
+            Console.WriteLine("[TakePicture] Live view resumed");
         }
     }
 

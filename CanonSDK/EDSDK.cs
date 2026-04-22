@@ -73,6 +73,9 @@ public static class EDSDK
     [DllImport(DLL)]
     public static extern EdsError EdsRelease(IntPtr obj);
 
+    [DllImport(DLL)]
+    public static extern EdsError EdsSetCapacity(IntPtr camera, EdsCapacity capacity);
+
     # endregion# Initialization and Camera Management
 
     #region Event Handler Registration
@@ -140,6 +143,15 @@ public static class EDSDK
         int size,
         ref uint data
     ); // turn on live view
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsSetPropertyData(
+        IntPtr camera,
+        uint propertyID,
+        int param,
+        int size,
+        uint data
+    ); // overload for passing value directly
 
     [DllImport(DLL)]
     public static extern EdsError EdsGetPropertyData(

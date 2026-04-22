@@ -76,10 +76,13 @@ public static class EdsPropertyID
     public const uint Evf_OutputDevice = 0x00000500;
     public const uint Evf_Mode = 0x00000501;
 
-    // Camera settings properties
+    // camera settings properties
     public const uint PropID_ISOSpeed = 0x00000402;
-    public const uint PropID_Av = 0x00000405; // Aperture Value
-    public const uint PropID_Tv = 0x00000406; // Shutter Speed (Time Value)
+    public const uint PropID_Av = 0x00000405; // aperture value
+    public const uint PropID_Tv = 0x00000406; // shutter speed (Time Value)
+    public const uint PropID_SaveTo = 0x0000000B; // save destination
+
+    // histogram properties (from EdsEvfImageRef)
     public const uint Evf_HistogramY = 0x00000515;
     public const uint Evf_HistogramR = 0x00000516;
     public const uint Evf_HistogramG = 0x00000517;
@@ -165,6 +168,21 @@ public static class EdsAccess
     public const uint Read = 1;
     public const uint Write = 2;
     public const uint ReadWrite = 3;
+}
+
+public static class EdsSaveTo
+{
+    public const uint Camera = 1;
+    public const uint Host = 2;
+    public const uint Both = 3;
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 2)]
+public struct EdsCapacity
+{
+    public int NumberOfFreeClusters;
+    public int BytesPerSector;
+    public int Reset;
 }
 
 #endregion Event Types
