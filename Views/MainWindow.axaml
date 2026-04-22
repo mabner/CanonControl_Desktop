@@ -16,6 +16,7 @@
 
         <Window.Resources>
                 <helpers:EnumNotEqualConverter x:Key="EnumNotEqualConverter" />
+                <helpers:EnumToBoolConverter x:Key="EnumToBoolConverter" />
         </Window.Resources>
 
         <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="3*,2*">
@@ -77,7 +78,7 @@
                         <Button Grid.Column="6"
                                 MinWidth="90" MinHeight="50" Margin="4"
                                 Command="{Binding ConnectCameraCommand}"
-                                IsEnabled="{Binding !IsCameraConnected}">
+                                IsEnabled="{Binding CanConnect}">
                                 <TextBlock Text="Connect"
                                            TextAlignment="Center"
                                            FontSize="14" />
@@ -85,7 +86,7 @@
                         <Button Grid.Column="7"
                                 MinWidth="90" MinHeight="50" Margin="4"
                                 Command="{Binding DisconnectCameraCommand}"
-                                IsEnabled="{Binding IsCameraConnected}">
+                                IsEnabled="{Binding CanDisconnect}">
                                 <TextBlock Text="Disconnect"
                                            TextAlignment="Center"
                                            FontSize="14" />

@@ -325,7 +325,7 @@ public class CameraService
 
     public void TakePicture()
     {
-        // Temporarily pause live view downloads to reduce lock contention
+        // temporarily pause live view downloads to reduce lock contention
         _isEvfDownloadPaused = true;
 
         try
@@ -339,8 +339,8 @@ public class CameraService
             }
             Console.WriteLine("[TakePicture] Lock released");
 
-            // Wait for camera to process the shot and trigger download
-            // Don't hold the lock during this wait
+            // wait for camera to process the shot and trigger download
+            // don't hold the lock during this wait
             Thread.Sleep(200);
             Console.WriteLine("[TakePicture] Wait completed");
         }
@@ -351,7 +351,7 @@ public class CameraService
         }
         finally
         {
-            // Resume live view downloads
+            // resume live view downloads
             _isEvfDownloadPaused = false;
             Console.WriteLine("[TakePicture] Live view resumed");
         }
@@ -418,6 +418,63 @@ public class CameraService
         lock (_cameraLock)
         {
             return _sdk.SetProperty(EdsPropertyID.PropID_ISOSpeed, isoValue);
+        }
+    }
+
+    public bool TryGetPropertyValue(uint propertyId, out uint value)
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.TryGetPropertyValue(propertyId, out value);
+        }
+    }
+
+    public string FormatPropertyValue(uint propertyId, uint value)
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.FormatPropertyValue(propertyId, value);
+        }
+    }
+
+    public bool TrySetPropertyValue(uint propertyId, uint value)
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.SetProperty(propertyId, value);
+        }
+    }
+
+    public bool TrySetPropertyRelativeToBase(
+        uint propertyId,
+        uint baseValue,
+        double stopOffset,
+        out uint appliedValue
+    )
+    {
+        lock (_cameraLock)
+        {
+            appliedValue = baseValue;
+
+            if (
+                !_sdk.TryGetShiftedPropertyValue(
+                    propertyId,
+                    baseValue,
+                    stopOffset,
+                    out var targetValue
+                )
+            )
+            {
+                return false;
+            }
+
+            if (!_sdk.SetProperty(propertyId, targetValue))
+            {
+                return false;
+            }
+
+            appliedValue = targetValue;
+            return true;
         }
     }
 

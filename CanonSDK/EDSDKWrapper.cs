@@ -339,7 +339,7 @@ public class EDSDKWrapper
         if (!TryGetUInt32Property(EdsPropertyID.PropID_Tv, out var tvValue))
             return "N/A";
 
-        return ConvertTvToString(tvValue);
+        return FormatPropertyValue(EdsPropertyID.PropID_Tv, tvValue);
     }
 
     public string GetAperture()
@@ -347,7 +347,7 @@ public class EDSDKWrapper
         if (!TryGetUInt32Property(EdsPropertyID.PropID_Av, out var avValue))
             return "N/A";
 
-        return ConvertAvToString(avValue);
+        return FormatPropertyValue(EdsPropertyID.PropID_Av, avValue);
     }
 
     public string GetIso()
@@ -355,7 +355,7 @@ public class EDSDKWrapper
         if (!TryGetUInt32Property(EdsPropertyID.PropID_ISOSpeed, out var isoValue))
             return "N/A";
 
-        return ConvertIsoToString(isoValue);
+        return FormatPropertyValue(EdsPropertyID.PropID_ISOSpeed, isoValue);
     }
 
     public bool IsAutoIso()
@@ -563,6 +563,22 @@ public class EDSDKWrapper
 
     #region Property Management
 
+    public bool TryGetPropertyValue(uint propertyId, out uint value)
+    {
+        return TryGetUInt32Property(propertyId, out value);
+    }
+
+    public string FormatPropertyValue(uint propertyId, uint value)
+    {
+        return propertyId switch
+        {
+            EdsPropertyID.PropID_Tv => ConvertTvToString(value),
+            EdsPropertyID.PropID_Av => ConvertAvToString(value),
+            EdsPropertyID.PropID_ISOSpeed => ConvertIsoToString(value),
+            _ => $"0x{value:X}",
+        };
+    }
+
     public bool GetPropertyDesc(uint propertyId, out EdsPropertyDesc desc)
     {
         return EDSDK.EdsGetPropertyDesc(_camera, propertyId, out desc) == EdsError.EDS_ERR_OK;
@@ -587,6 +603,32 @@ public class EDSDKWrapper
 
         values = Array.Empty<uint>();
         return false;
+    }
+
+    public bool TryGetShiftedPropertyValue(
+        uint propertyId,
+        uint baseValue,
+        double stopOffset,
+        out uint targetValue
+    )
+    {
+        targetValue = baseValue;
+
+        if (
+            !GetAvailablePropertyValues(propertyId, out var availableValues)
+            || availableValues.Length == 0
+        )
+        {
+            return false;
+        }
+
+        return CanonPropertyValueResolver.TryResolveShiftedValue(
+            propertyId,
+            baseValue,
+            stopOffset,
+            availableValues,
+            out targetValue
+        );
     }
 
     public bool GetNextPropertyValue(uint propertyId, out uint nextValue)

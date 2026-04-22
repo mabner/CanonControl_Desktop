@@ -50,9 +50,15 @@ public partial class MainWindowViewModel : ViewModelBase
 
     // camera state
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConnect))]
+    [NotifyPropertyChangedFor(nameof(CanDisconnect))]
     [NotifyCanExecuteChangedFor(nameof(ToggleLiveViewCommand))]
     [NotifyCanExecuteChangedFor(nameof(ContextCaptureCommand))]
     private bool _isCameraConnected;
+
+    public bool CanConnect => !IsCameraConnected;
+
+    public bool CanDisconnect => IsCameraConnected;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(WindowTitle))]
@@ -565,6 +571,8 @@ public partial class MainWindowViewModel : ViewModelBase
     // helper properties to track running state of feature ViewModels
     private bool IsStackRunning =>
         CurrentSidePanelViewModel is FocusStackViewModel fsvm && fsvm.IsRunning;
+    private bool IsBracketingRunning =>
+        CurrentSidePanelViewModel is ExposureBracketingViewModel ebvm && ebvm.IsRunning;
     private bool IsLapseRunning =>
         CurrentSidePanelViewModel is TimeLapseViewModel tlvm && tlvm.IsRunning;
 

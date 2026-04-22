@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
+using CanonControl.CanonSDK;
 using CanonControl.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -30,7 +30,7 @@ public partial class ExposureBracketingViewModel : ViewModelBase
     private string _status = "Ready";
 
     [ObservableProperty]
-    private int _exposureParameterIndex = 0; // default to "Shutter Speed"
+    private int _exposureParameterIndex; // default to "Shutter Speed"
 
     public ExposureBracketingViewModel(CameraService cameraService)
     {
@@ -59,101 +59,57 @@ public partial class ExposureBracketingViewModel : ViewModelBase
         if (IsRunning)
             return;
 
+        var propertyId =
+            ExposureParameterIndex == 0 ? EdsPropertyID.PropID_Tv : EdsPropertyID.PropID_ISOSpeed;
+        uint? baseExposureValue = null;
+
         IsRunning = true;
         CurrentShot = 0;
         Status = "Running...";
 
         try
         {
-            // store base exposure value at start
-            string baseExposure =
-                ExposureParameterIndex == 0
-                    ? _cameraService.GetShutterSpeed()
-                    : _cameraService.GetIso();
+            if (!_cameraService.TryGetPropertyValue(propertyId, out var capturedBaseExposureValue))
+            {
+                throw new InvalidOperationException(
+                    "Unable to read the current exposure from the camera."
+                );
+            }
+
+            baseExposureValue = capturedBaseExposureValue;
+
+            var baseExposure = _cameraService.FormatPropertyValue(
+                propertyId,
+                capturedBaseExposureValue
+            );
 
             Console.WriteLine($"[Bracketing] Base exposure: {baseExposure}");
 
-            // match camera's built-in behavior:
-            // shot 1: 0 (base exposure - current camera setting, e.g., 1/60)
-            // shot 2: -stepSize (underexposed, e.g., 1/250 for -2 stops)
-            // shot 3: +stepSize (overexposed, e.g., 1/15 for +2 stops)
-
-            // define the sequence: 0, -1, +1 for 3 shots
-            double[] exposureOffsets = NumberOfShots switch
-            {
-                3 => new[] { 0.0, -StepSize, StepSize },
-                5 => new[] { 0.0, -StepSize, StepSize, -2 * StepSize, 2 * StepSize },
-                7 => new[]
-                {
-                    0.0,
-                    -StepSize,
-                    StepSize,
-                    -2 * StepSize,
-                    2 * StepSize,
-                    -3 * StepSize,
-                    3 * StepSize,
-                },
-                _ => new[] { 0.0 }, // fallback for other shot counts
-            };
+            var exposureOffsets = BuildExposureOffsets();
 
             for (int i = 0; i < NumberOfShots && IsRunning; i++)
             {
                 CurrentShot = i + 1;
                 Status = $"Shot {i + 1} of {NumberOfShots}";
 
-                // get the exposure offset for this shot
-                double exposureOffset = i < exposureOffsets.Length ? exposureOffsets[i] : 0.0;
-
-                // calculate number of steps to adjust (each increment/decrement is typically 1/3 stop)
-                int steps = (int)System.Math.Round(exposureOffset * 3);
+                var exposureOffset = exposureOffsets[i];
+                if (
+                    !_cameraService.TrySetPropertyRelativeToBase(
+                        propertyId,
+                        capturedBaseExposureValue,
+                        exposureOffset,
+                        out var appliedExposureValue
+                    )
+                )
+                {
+                    throw new InvalidOperationException(
+                        $"Failed to apply exposure offset of {exposureOffset} EV."
+                    );
+                }
 
                 Console.WriteLine(
-                    $"[Bracketing] Shot {i + 1}: offset={exposureOffset} stops, steps={steps}"
+                    $"[Bracketing] Shot {i + 1}: offset={exposureOffset} stops, target={_cameraService.FormatPropertyValue(propertyId, appliedExposureValue)}"
                 );
-
-                // apply exposure adjustment relative to base exposure
-                if (ExposureParameterIndex == 0) // shutter Speed
-                {
-                    if (steps > 0)
-                    {
-                        // slower shutter speed (brighter/overexposed)
-                        for (int s = 0; s < steps; s++)
-                        {
-                            _cameraService.DecrementShutterSpeed();
-                            await Task.Delay(150); // increased delay for camera to process
-                        }
-                    }
-                    else if (steps < 0)
-                    {
-                        // faster shutter speed (darker/underexposed)
-                        for (int s = 0; s < -steps; s++)
-                        {
-                            _cameraService.IncrementShutterSpeed();
-                            await Task.Delay(150); // increased delay
-                        }
-                    }
-                }
-                else // ISO
-                {
-                    if (steps > 0)
-                    {
-                        // higher ISO (brighter/overexposed)
-                        for (int s = 0; s < steps; s++)
-                        {
-                            _cameraService.IncrementIso();
-                            await Task.Delay(150); // increased delay
-                        }
-                    }
-                    else if (steps < 0)
-                    {
-                        // lower ISO (darker/underexposed)
-                        for (int s = 0; s < -steps; s++)
-                        {
-                            _cameraService.DecrementIso();
-                            await Task.Delay(150); // increased delay
-                        }
-                    }
-                }
 
                 // wait for camera to apply settings
                 await Task.Delay(500);
@@ -172,126 +128,44 @@ public partial class ExposureBracketingViewModel : ViewModelBase
 
                 // wait for image capture to complete
                 await Task.Delay(500);
-
-                // after taking the shot, restore to base exposure for the next shot
-                // (reverse the adjustment we just made)
-                if (i < NumberOfShots - 1) // don't restore after the last shot
-                {
-                    Console.WriteLine($"[Bracketing] Restoring to base exposure: {baseExposure}");
-
-                    if (ExposureParameterIndex == 0) // shutter Speed
-                    {
-                        if (steps > 0)
-                        {
-                            // restore: faster shutter speed (reverse the decrement)
-                            for (int s = 0; s < steps; s++)
-                            {
-                                _cameraService.IncrementShutterSpeed();
-                                await Task.Delay(150); // increased delay
-                            }
-                        }
-                        else if (steps < 0)
-                        {
-                            // restore: slower shutter speed (reverse the increment)
-                            for (int s = 0; s < -steps; s++)
-                            {
-                                _cameraService.DecrementShutterSpeed();
-                                await Task.Delay(150); // increased delay
-                            }
-                        }
-                    }
-                    else // ISO
-                    {
-                        if (steps > 0)
-                        {
-                            // restore: lower ISO (reverse the increment)
-                            for (int s = 0; s < steps; s++)
-                            {
-                                _cameraService.DecrementIso();
-                                await Task.Delay(150); // increased delay
-                            }
-                        }
-                        else if (steps < 0)
-                        {
-                            // restore: higher ISO (reverse the decrement)
-                            for (int s = 0; s < -steps; s++)
-                            {
-                                _cameraService.IncrementIso();
-                                await Task.Delay(150); // increased delay
-                            }
-                        }
-                    }
-
-                    // extra wait after restoration to ensure camera is ready
-                    await Task.Delay(500);
-
-                    // verify restoration was successful
-                    string restoredExposure =
-                        ExposureParameterIndex == 0
-                            ? _cameraService.GetShutterSpeed()
-                            : _cameraService.GetIso();
-                    Console.WriteLine(
-                        $"[Bracketing] Restored to: {restoredExposure} (expected: {baseExposure})"
-                    );
-                }
-            }
-
-            // final restoration to base exposure (after last shot)
-            double lastOffset = exposureOffsets[NumberOfShots - 1];
-            int lastSteps = (int)System.Math.Round(lastOffset * 3);
-
-            Console.WriteLine($"[Bracketing] Final restoration to base: {baseExposure}");
-
-            if (ExposureParameterIndex == 0) // shutter Speed
-            {
-                if (lastSteps > 0)
-                {
-                    for (int s = 0; s < lastSteps; s++)
-                    {
-                        _cameraService.IncrementShutterSpeed();
-                        await Task.Delay(100);
-                    }
-                }
-                else if (lastSteps < 0)
-                {
-                    for (int s = 0; s < -lastSteps; s++)
-                    {
-                        _cameraService.DecrementShutterSpeed();
-                        await Task.Delay(100);
-                    }
-                }
-            }
-            else // ISO
-            {
-                if (lastSteps > 0)
-                {
-                    for (int s = 0; s < lastSteps; s++)
-                    {
-                        _cameraService.DecrementIso();
-                        await Task.Delay(100);
-                    }
-                }
-                else if (lastSteps < 0)
-                {
-                    for (int s = 0; s < -lastSteps; s++)
-                    {
-                        _cameraService.IncrementIso();
-                        await Task.Delay(100);
-                    }
-                }
             }
 
             Status = IsRunning ? "Completed" : "Stopped";
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             Status = $"Error: {ex.Message}";
             Console.WriteLine($"[Bracketing] Error: {ex}");
         }
         finally
         {
+            if (baseExposureValue.HasValue)
+            {
+                _ = _cameraService.TrySetPropertyValue(propertyId, baseExposureValue.Value);
+            }
+
             IsRunning = false;
         }
+    }
+
+    private double[] BuildExposureOffsets()
+    {
+        if (NumberOfShots <= 1)
+        {
+            return new[] { 0.0 };
+        }
+
+        var offsets = new List<double> { 0.0 };
+        for (var level = 1; offsets.Count < NumberOfShots; level++)
+        {
+            offsets.Add(-level * StepSize);
+            if (offsets.Count < NumberOfShots)
+            {
+                offsets.Add(level * StepSize);
+            }
+        }
+
+        return offsets.ToArray();
     }
 
     // stop the exposure bracketing sequence
