@@ -8,6 +8,7 @@
 */
 
 using System;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -23,6 +24,12 @@ namespace CanonControl.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
+    private const double DefaultWindowHeight = 480;
+    private const double DefaultLiveViewSurfaceWidth = 600;
+    private const double DefaultLiveViewSurfaceHeight = 400;
+    private const double RaspberryTaskbarHeight = 32;
+    private const double RaspberryLiveViewSurfaceHeight = 368;
+
     private readonly CameraService _cameraService;
     private readonly SettingsService _settingsService;
     private System.Threading.CancellationTokenSource? _connectionPollingCts;
@@ -38,6 +45,7 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         _cameraService = cameraService;
         _settingsService = new SettingsService();
+        ApplyPlatformLayoutDefaults();
 
         // load and apply settings
         LoadSettings();
@@ -46,9 +54,19 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private string _status = "Disconnected";
 
+    [ObservableProperty]
+    private double _windowHeight = DefaultWindowHeight;
+
+    [ObservableProperty]
+    private double _liveViewSurfaceWidth = DefaultLiveViewSurfaceWidth;
+
+    [ObservableProperty]
+    private double _liveViewSurfaceHeight = DefaultLiveViewSurfaceHeight;
+
     // navigation state
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(ContextCaptureLabel))].    private NavigationContext _currentContext = NavigationContext.RemoteCapture;
+    [NotifyPropertyChangedFor(nameof(ContextCaptureLabel))]
+    private NavigationContext _currentContext = NavigationContext.RemoteCapture;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ContextCaptureLabel))]
@@ -419,6 +437,18 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // store live view frame rate for use when starting live view
         _liveViewFrameRate = settings.LiveViewFrameRate;
+    }
+
+    private void ApplyPlatformLayoutDefaults()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            return;
+        }
+
+        WindowHeight = DefaultWindowHeight - RaspberryTaskbarHeight;
+        LiveViewSurfaceHeight = RaspberryLiveViewSurfaceHeight;
+        LiveViewSurfaceWidth = LiveViewSurfaceHeight * 1.5;
     }
 
     // control panel commands

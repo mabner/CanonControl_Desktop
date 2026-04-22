@@ -9,7 +9,7 @@
         x:Class="CanonControl.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Width="800" Height="450"
+        Width="800" Height="{Binding WindowHeight}"
         CanResize="False"
         WindowStartupLocation="CenterScreen"
         Title="{Binding WindowTitle}">
@@ -95,7 +95,7 @@
 
                 <!-- Live View Area (Row 1, Column 0) -->
                 <Viewbox Grid.Row="1" Grid.Column="0" Stretch="Uniform">
-                        <Grid Width="600" Height="400" Background="Black">
+                        <Grid Width="{Binding LiveViewSurfaceWidth}" Height="{Binding LiveViewSurfaceHeight}" Background="Black">
                                 <Image Source="{Binding LiveImage}"
                                        Stretch="UniformToFill"
                                        RenderOptions.BitmapInterpolationMode="LowQuality" />
