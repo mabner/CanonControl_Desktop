@@ -108,15 +108,13 @@ public class EDSDKWrapper
 
     private void ApplySaveDestinationToCamera()
     {
+        if (_camera == IntPtr.Zero)
+            return;
+
         // use this.SaveDestination to disambiguate the property from the type.
         var dest = this.SaveDestination;
-        var saveToErr = EDSDK.EdsSetPropertyData(
-            _camera,
-            EdsPropertyID.PropID_SaveTo,
-            0,
-            sizeof(uint),
-            (uint)dest
-        );
+        uint saveToValue = (uint)dest;
+        var saveToErr = SetUInt32PropertyWithRetry(EdsPropertyID.PropID_SaveTo, ref saveToValue);
 
         if (saveToErr == EdsError.EDS_ERR_OK)
         {
@@ -146,6 +144,30 @@ public class EDSDKWrapper
                 $"Warning: Failed to set PropID_SaveTo (err={saveToErr}). Images may not download automatically."
             );
         }
+    }
+
+    private EdsError SetUInt32PropertyWithRetry(
+        uint propertyId,
+        ref uint value,
+        int maxRetries = 10
+    )
+    {
+        for (int i = 0; i < maxRetries; i++)
+        {
+            var err = EDSDK.EdsSetPropertyData(_camera, propertyId, 0, sizeof(uint), ref value);
+            if (err == EdsError.EDS_ERR_OK)
+                return err;
+
+            if (err == EdsError.EDS_ERR_DEVICE_BUSY)
+            {
+                Thread.Sleep(100);
+                continue;
+            }
+
+            return err;
+        }
+
+        return EdsError.EDS_ERR_DEVICE_BUSY;
     }
 
     public string GetCameraName()
@@ -756,6 +778,12 @@ public class EDSDKWrapper
 
     private bool TryGetUInt32Property(uint propertyId, out uint value)
     {
+        if (_camera == IntPtr.Zero)
+        {
+            value = 0;
+            return false;
+        }
+
         return EDSDK.EdsGetPropertyData(_camera, propertyId, 0, sizeof(uint), out value)
             == EdsError.EDS_ERR_OK;
     }
@@ -768,6 +796,9 @@ public class EDSDKWrapper
 
     public EdsError SendCommand(uint command, int param)
     {
+        if (_camera == IntPtr.Zero)
+            return EdsError.EDS_ERR_OK;
+
         const int maxRetries = 10;
 
         for (int i = 0; i < maxRetries; i++)
