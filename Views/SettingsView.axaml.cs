@@ -4,7 +4,7 @@ using Avalonia.Markup.Xaml;
 
 namespace CanonControl.Views;
 
-public partial class SettingsView : Window
+public partial class SettingsView : UserControl
 {
     public SettingsView()
     {
