@@ -8,7 +8,7 @@ using CanonControl.Models;
 
 namespace CanonControl.Services;
 
-// service for loading and saving application settings to JSON file
+// service for loading and saving application settings to JSON file.
 public class SettingsService
 {
     private static readonly string SettingsDirectory = Path.Combine(
@@ -33,42 +33,52 @@ public class SettingsService
         {
             if (!File.Exists(SettingsFilePath))
             {
-                // return default settings if file doesn't exist
+                // return default settings if file doesn't exist.
                 return new AppSettings();
             }
 
             var json = File.ReadAllText(SettingsFilePath);
             var settings = JsonSerializer.Deserialize<AppSettings>(json);
 
-            return settings ?? new AppSettings();
+            if (settings == null)
+                return new AppSettings();
+
+            // backward compatibility: older builds used AutoDownload.
+            // if enabled and destination is still default Camera, migrate to Both.
+            if (settings.AutoDownload && settings.SaveDestination == SaveDestination.Camera)
+            {
+                settings.SaveDestination = SaveDestination.Both;
+            }
+
+            return settings;
         }
         catch (Exception ex)
         {
-            // log error and return defaults if loading fails
+            // log error and return defaults if loading fails.
             Console.WriteLine($"Failed to load settings: {ex.Message}");
             return new AppSettings();
         }
     }
 
-    // save settings to JSON file
+    // save settings to JSON file.
     public void Save(AppSettings settings)
     {
         try
         {
-            // ensure directory exists
+            // ensure directory exists.
             Directory.CreateDirectory(SettingsDirectory);
 
-            // serialize and save
+            // serialize and save.
             var json = JsonSerializer.Serialize(settings, JsonOptions);
             File.WriteAllText(SettingsFilePath, json);
         }
         catch (Exception ex)
         {
-            // log error if saving fails
+            // log error if saving fails.
             Console.WriteLine($"Failed to save settings: {ex.Message}");
         }
     }
 
-    // get the full path where settings are stored
+    // get the full path where settings are stored.
     public string GetSettingsPath() => SettingsFilePath;
 }

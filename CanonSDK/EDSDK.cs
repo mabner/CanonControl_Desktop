@@ -74,6 +74,9 @@ public static class EDSDK
     public static extern EdsError EdsRelease(IntPtr obj);
 
     [DllImport(DLL)]
+    public static extern EdsError EdsGetEvent();
+
+    [DllImport(DLL)]
     public static extern EdsError EdsSetCapacity(IntPtr camera, EdsCapacity capacity);
 
     # endregion# Initialization and Camera Management
@@ -131,6 +134,9 @@ public static class EDSDK
 
     [DllImport(DLL)]
     public static extern EdsError EdsDownloadComplete(IntPtr inDirItemRef);
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsDownloadCancel(IntPtr inDirItemRef);
 
     #endregion Image Download
 

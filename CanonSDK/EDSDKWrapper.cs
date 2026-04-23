@@ -21,6 +21,7 @@ public class EDSDKWrapper
 {
     private IntPtr _camera;
     private EDSDK.EdsObjectEventHandler? _objectEventHandler;
+    private readonly object _downloadLock = new();
 
     public string SavePath { get; set; } = string.Empty;
     public SaveDestination SaveDestination { get; set; } = SaveDestination.Camera;
@@ -820,6 +821,12 @@ public class EDSDKWrapper
         return EdsError.EDS_ERR_DEVICE_BUSY;
     }
 
+    public void PumpEvents()
+    {
+        // some camera models require explicit event pumping so object events are delivered reliably
+        EDSDK.EdsGetEvent();
+    }
+
     #region Event Handlers and Download
 
     private uint OnObjectEvent(uint inEvent, IntPtr inRef, IntPtr inContext)
@@ -835,12 +842,22 @@ public class EDSDKWrapper
             return (uint)EdsError.EDS_ERR_OK;
         }
 
-        Console.WriteLine($"OnObjectEvent called: event=0x{inEvent:X8}, ref={inRef}");
+        Console.WriteLine(
+            $"[SDK] Camera object event received: event=0x{inEvent:X8} (0x208=ImageReadyToDownload, 0x201=VolumeInfo, 0x204=ItemCreated), ref={inRef}"
+        );
 
-        if (inEvent == EdsObjectEvent.DirItemRequestTransfer)
+        if (
+            inEvent == EdsObjectEvent.DirItemRequestTransfer
+            || inEvent == EdsObjectEvent.DirItemRequestTransferDT
+        )
         {
-            Console.WriteLine("DirItemRequestTransfer event detected - starting download");
-            DownloadImage(inRef);
+            Console.WriteLine(
+                $"Transfer request event detected (0x{inEvent:X8}) - starting download"
+            );
+            lock (_downloadLock)
+            {
+                DownloadImage(inRef);
+            }
         }
         else if (inRef != IntPtr.Zero)
         {
@@ -859,15 +876,20 @@ public class EDSDKWrapper
                 Console.WriteLine(
                     "[Download] Skipping host download because SaveDestination=Camera."
                 );
+                EDSDK.EdsDownloadCancel(directoryItem);
                 EDSDK.EdsRelease(directoryItem);
                 return;
             }
 
             // get file info
-            var err = EDSDK.EdsGetDirectoryItemInfo(directoryItem, out var dirItemInfo);
+            EdsDirectoryItemInfo dirItemInfo = default;
+            var err = RetryIfDeviceBusy(() =>
+                EDSDK.EdsGetDirectoryItemInfo(directoryItem, out dirItemInfo)
+            );
             if (err != EdsError.EDS_ERR_OK)
             {
                 Console.WriteLine($"[Download] Failed to get directory item info: {err}");
+                EDSDK.EdsDownloadCancel(directoryItem);
                 EDSDK.EdsRelease(directoryItem);
                 return;
             }
@@ -878,6 +900,7 @@ public class EDSDKWrapper
                 Console.WriteLine(
                     $"[Download] ERROR: SavePath is empty or null. Image '{dirItemInfo.szFileName}' cannot be downloaded."
                 );
+                EDSDK.EdsDownloadCancel(directoryItem);
                 EDSDK.EdsRelease(directoryItem);
                 return;
             }
@@ -895,47 +918,91 @@ public class EDSDKWrapper
                     Console.WriteLine(
                         $"[Download] Failed to create directory '{SavePath}': {ex.Message}"
                     );
+                    EDSDK.EdsDownloadCancel(directoryItem);
                     EDSDK.EdsRelease(directoryItem);
                     return;
                 }
             }
 
             // build full file path
-            string filePath = System.IO.Path.Combine(SavePath, dirItemInfo.szFileName);
+            var fileName = string.IsNullOrWhiteSpace(dirItemInfo.szFileName)
+                ? $"capture_{DateTime.Now:yyyyMMdd_HHmmss}.jpg"
+                : dirItemInfo.szFileName;
+            string filePath = System.IO.Path.Combine(SavePath, fileName);
             Console.WriteLine($"[Download] Target path: {filePath}");
             Console.WriteLine($"[Download] File size: {dirItemInfo.Size} bytes");
 
-            // create file stream
-            err = EDSDK.EdsCreateFileStream(
-                filePath,
-                EdsFileCreateDisposition.CreateAlways,
-                EdsAccess.ReadWrite,
-                out var stream
-            );
+            // use an SDK memory stream and persist with .NET.
+            // this avoids Windows path/ANSI issues in EdsCreateFileStream.
+            IntPtr stream = IntPtr.Zero;
+            err = RetryIfDeviceBusy(() => EDSDK.EdsCreateMemoryStream(0, out stream));
             if (err != EdsError.EDS_ERR_OK)
             {
                 Console.WriteLine(
-                    $"[Download] Failed to create file stream at '{filePath}': {err}"
+                    $"[Download] Failed to create memory stream for '{filePath}': {err}"
                 );
+                EDSDK.EdsDownloadCancel(directoryItem);
                 EDSDK.EdsRelease(directoryItem);
                 return;
             }
 
             // download image
-            err = EDSDK.EdsDownload(directoryItem, dirItemInfo.Size, stream);
+            err = RetryIfDeviceBusy(() =>
+                EDSDK.EdsDownload(directoryItem, dirItemInfo.Size, stream)
+            );
             if (err != EdsError.EDS_ERR_OK)
             {
                 Console.WriteLine($"[Download] Failed to download image: {err}");
+                EDSDK.EdsDownloadCancel(directoryItem);
+                EDSDK.EdsRelease(stream);
+                EDSDK.EdsRelease(directoryItem);
+                return;
+            }
+
+            IntPtr pointer = IntPtr.Zero;
+            uint length = 0;
+            err = RetryIfDeviceBusy(() => EDSDK.EdsGetPointer(stream, out pointer));
+            if (err != EdsError.EDS_ERR_OK)
+            {
+                Console.WriteLine($"[Download] Failed to get memory stream pointer: {err}");
+                EDSDK.EdsDownloadCancel(directoryItem);
+                EDSDK.EdsRelease(stream);
+                EDSDK.EdsRelease(directoryItem);
+                return;
+            }
+
+            err = RetryIfDeviceBusy(() => EDSDK.EdsGetLength(stream, out length));
+            if (err != EdsError.EDS_ERR_OK)
+            {
+                Console.WriteLine($"[Download] Failed to get memory stream length: {err}");
+                EDSDK.EdsDownloadCancel(directoryItem);
+                EDSDK.EdsRelease(stream);
+                EDSDK.EdsRelease(directoryItem);
+                return;
+            }
+
+            var data = new byte[length];
+            Marshal.Copy(pointer, data, 0, (int)length);
+
+            try
+            {
+                System.IO.File.WriteAllBytes(filePath, data);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Download] Failed to write file '{filePath}': {ex.Message}");
+                EDSDK.EdsDownloadCancel(directoryItem);
                 EDSDK.EdsRelease(stream);
                 EDSDK.EdsRelease(directoryItem);
                 return;
             }
 
             // complete download
-            err = EDSDK.EdsDownloadComplete(directoryItem);
+            err = RetryIfDeviceBusy(() => EDSDK.EdsDownloadComplete(directoryItem));
             if (err != EdsError.EDS_ERR_OK)
             {
                 Console.WriteLine($"[Download] Failed to complete download: {err}");
+                EDSDK.EdsDownloadCancel(directoryItem);
             }
 
             // release resources
@@ -962,9 +1029,32 @@ public class EDSDKWrapper
             Console.WriteLine($"[Download] Stack trace: {ex.StackTrace}");
             if (directoryItem != IntPtr.Zero)
             {
+                EDSDK.EdsDownloadCancel(directoryItem);
                 EDSDK.EdsRelease(directoryItem);
             }
         }
+    }
+
+    private EdsError RetryIfDeviceBusy(
+        Func<EdsError> action,
+        int maxRetries = 10,
+        int delayMs = 100
+    )
+    {
+        for (int i = 0; i < maxRetries; i++)
+        {
+            var err = action();
+            if (err == EdsError.EDS_ERR_OK)
+                return err;
+
+            if (err != EdsError.EDS_ERR_DEVICE_BUSY)
+                return err;
+
+            Thread.Sleep(delayMs);
+            EDSDK.EdsGetEvent();
+        }
+
+        return EdsError.EDS_ERR_DEVICE_BUSY;
     }
 
     #endregion Event Handlers and Download

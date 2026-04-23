@@ -352,10 +352,17 @@ public class CameraService
             }
             Console.WriteLine("[TakePicture] Lock released");
 
-            // wait for camera to process the shot and trigger download
-            // don't hold the lock during this wait
-            Thread.Sleep(200);
-            Console.WriteLine("[TakePicture] Wait completed");
+            // pump EDSDK events for a short window so transfer callbacks are delivered
+            var stopAt = DateTime.UtcNow.AddMilliseconds(1200);
+            while (DateTime.UtcNow < stopAt)
+            {
+                lock (_cameraLock)
+                {
+                    _sdk.PumpEvents();
+                }
+                Thread.Sleep(50);
+            }
+            Console.WriteLine("[TakePicture] Event pump completed");
         }
         catch (Exception ex)
         {

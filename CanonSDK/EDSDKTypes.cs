@@ -152,7 +152,16 @@ public static class EdsEvfHistogramStatus
 public static class EdsObjectEvent
 {
     public const uint All = 0x00000200;
-    public const uint DirItemRequestTransfer = 0x00000202;
+    public const uint VolumeInfoChanged = 0x00000201;
+    public const uint VolumeUpdateItems = 0x00000202;
+    public const uint FolderUpdateItems = 0x00000203;
+    public const uint DirItemCreated = 0x00000204;
+    public const uint DirItemRemoved = 0x00000205;
+    public const uint DirItemInfoChanged = 0x00000206;
+    public const uint DirItemContentChanged = 0x00000207;
+    public const uint DirItemRequestTransfer = 0x00000208;
+    public const uint DirItemRequestTransferDT = 0x00000209;
+    public const uint DirItemCancelTransferDT = 0x0000020A;
 }
 
 public static class EdsFileCreateDisposition
