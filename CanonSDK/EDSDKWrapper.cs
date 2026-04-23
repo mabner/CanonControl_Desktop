@@ -22,6 +22,10 @@ public class EDSDKWrapper
     private IntPtr _camera;
     private EDSDK.EdsObjectEventHandler? _objectEventHandler;
     private readonly object _downloadLock = new();
+
+    // tracks how many transfer requests are still being processed.
+    private int _pendingDownloads;
+
     public string? LastError { get; private set; }
     public bool LastConnectionAttemptFoundNoCamera { get; private set; }
 
@@ -882,6 +886,27 @@ public class EDSDKWrapper
         EDSDK.EdsGetEvent();
     }
 
+    public bool WaitForPendingDownloads(TimeSpan timeout, int pollIntervalMs = 50)
+    {
+        // wait until all queued download callbacks finish or timeout expires.
+        var deadline = DateTime.UtcNow + timeout;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            // pumps Canon events so transfer callbacks continue running.
+            PumpEvents();
+
+            if (Volatile.Read(ref _pendingDownloads) == 0)
+            {
+                return true;
+            }
+
+            Thread.Sleep(pollIntervalMs);
+        }
+
+        return Volatile.Read(ref _pendingDownloads) == 0;
+    }
+
     #region Event Handlers and Download
 
     private uint OnObjectEvent(uint inEvent, IntPtr inRef, IntPtr inContext)
@@ -906,6 +931,9 @@ public class EDSDKWrapper
             || inEvent == EdsObjectEvent.DirItemRequestTransferDT
         )
         {
+            // increments pending transfer count for this incoming download request.
+            Interlocked.Increment(ref _pendingDownloads);
+
             Console.WriteLine(
                 $"Transfer request event detected (0x{inEvent:X8}) - starting download"
             );
@@ -1069,12 +1097,12 @@ public class EDSDKWrapper
             {
                 var fileInfo = new System.IO.FileInfo(filePath);
                 Console.WriteLine(
-                    $"[Download] ✓ Successfully saved: {dirItemInfo.szFileName} ({fileInfo.Length} bytes) to {SavePath}"
+                    $"[Download] OK: Successfully saved: {dirItemInfo.szFileName} ({fileInfo.Length} bytes) to {SavePath}"
                 );
             }
             else
             {
-                Console.WriteLine($"[Download] ✗ File not found after download: {filePath}");
+                Console.WriteLine($"[Download] ERROR: File not found after download: {filePath}");
             }
         }
         catch (Exception ex)
@@ -1087,6 +1115,11 @@ public class EDSDKWrapper
                 EDSDK.EdsDownloadCancel(directoryItem);
                 EDSDK.EdsRelease(directoryItem);
             }
+        }
+        finally
+        {
+            // decrements pending transfer count when this download request finishes.
+            Interlocked.Decrement(ref _pendingDownloads);
         }
     }
 

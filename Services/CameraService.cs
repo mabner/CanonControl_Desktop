@@ -390,7 +390,15 @@ public class CameraService
                 }
                 Thread.Sleep(50);
             }
-            Console.WriteLine("[TakePicture] Event pump completed");
+            Console.WriteLine("[TakePicture] Initial event pump completed");
+
+            // waits for host transfers to finish before allowing the next capture.
+            var downloadDrained = _sdk.WaitForPendingDownloads(TimeSpan.FromSeconds(10));
+            Console.WriteLine(
+                downloadDrained
+                    ? "[TakePicture] Pending downloads drained"
+                    : "[TakePicture] Timeout waiting for pending downloads to drain"
+            );
         }
         catch (Exception ex)
         {
