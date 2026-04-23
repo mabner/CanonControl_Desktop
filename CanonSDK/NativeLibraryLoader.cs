@@ -28,15 +28,14 @@ public static class NativeLibraryLoader
         {
             if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
             {
-                // chmod +x libEDSDK.so
                 LoadFirstAvailable(
+                    // may need chmod +x libEDSDK.so
                     "runtimes/linux-x64/native/libEDSDK.so",
                     "Platforms/Linux/x64/libEDSDK.so"
                 );
             }
             else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
             {
-                // chmod +x libEDSDK.so
                 LoadFirstAvailable(
                     "runtimes/linux-arm64/native/libEDSDK.so",
                     "Platforms/Linux/arm64/libEDSDK.so"
@@ -60,6 +59,7 @@ public static class NativeLibraryLoader
                 return;
             }
         }
+
         throw new FileNotFoundException(
             $"Native library not found. Probed paths: {string.Join(", ", relativePaths)}"
         );

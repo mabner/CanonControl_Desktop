@@ -25,6 +25,8 @@ public class CameraService
     private CancellationTokenSource? _focusCts;
     private Task? _liveViewTask;
     private volatile bool _isEvfDownloadPaused = false;
+    public string? LastConnectionError { get; private set; }
+    public bool LastConnectionAttemptFoundNoCamera { get; private set; }
 
     #region Settings
     public bool LiveViewDuringAutoFocus { get; set; } = true;
@@ -53,25 +55,51 @@ public class CameraService
 
     public async Task<bool> ConnectAsync(int timeoutSeconds = 10)
     {
-        NativeLibraryLoader.LoadEDSDK();
+        LastConnectionError = null;
+        LastConnectionAttemptFoundNoCamera = false;
+
+        try
+        {
+            NativeLibraryLoader.LoadEDSDK();
+        }
+        catch (Exception ex)
+        {
+            LastConnectionError = $"Failed to load native Canon SDK library: {ex.Message}";
+            Console.WriteLine($"[Connect] {LastConnectionError}");
+            return false;
+        }
 
         if (!_sdk.Initialize())
+        {
+            LastConnectionError = _sdk.LastError;
             return false;
+        }
 
         // poll for camera connection with configurable timeout
         const int delayMs = 500;
-        int maxAttempts = (timeoutSeconds * 1000) / delayMs; // convert seconds to attempts
+        int maxAttempts = (timeoutSeconds * 1000) / delayMs; // Convert seconds to attempts
 
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
             if (_sdk.ConnectFirstCamera())
             {
+                LastConnectionError = null;
+                LastConnectionAttemptFoundNoCamera = false;
                 return true;
             }
+
+            LastConnectionError = _sdk.LastError;
+            LastConnectionAttemptFoundNoCamera = _sdk.LastConnectionAttemptFoundNoCamera;
+
+            if (!LastConnectionAttemptFoundNoCamera)
+                return false;
 
             // wait before next attempt (non-blocking)
             await Task.Delay(delayMs);
         }
+
+        LastConnectionError ??= "No camera detected.";
+        LastConnectionAttemptFoundNoCamera = true;
         return false;
     }
 

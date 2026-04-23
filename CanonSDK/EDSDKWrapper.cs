@@ -22,6 +22,8 @@ public class EDSDKWrapper
     private IntPtr _camera;
     private EDSDK.EdsObjectEventHandler? _objectEventHandler;
     private readonly object _downloadLock = new();
+    public string? LastError { get; private set; }
+    public bool LastConnectionAttemptFoundNoCamera { get; private set; }
 
     public string SavePath { get; set; } = string.Empty;
     public SaveDestination SaveDestination { get; set; } = SaveDestination.Camera;
@@ -30,11 +32,25 @@ public class EDSDKWrapper
 
     public bool Initialize()
     {
-        return EDSDK.EdsInitializeSDK() == EdsError.EDS_ERR_OK;
+        var err = EDSDK.EdsInitializeSDK();
+        if (err == EdsError.EDS_ERR_OK)
+        {
+            LastError = null;
+            LastConnectionAttemptFoundNoCamera = false;
+            return true;
+        }
+
+        LastConnectionAttemptFoundNoCamera = false;
+        LastError = $"Failed to initialize Canon SDK: {err} (0x{(uint)err:X8})";
+        Console.WriteLine($"[Connect] {LastError}");
+        return false;
     }
 
     public bool ConnectFirstCamera()
     {
+        LastError = null;
+        LastConnectionAttemptFoundNoCamera = false;
+
         // close any existing connection first
         if (_camera != IntPtr.Zero)
         {
@@ -46,18 +62,43 @@ public class EDSDKWrapper
         IntPtr cameraList;
 
         // get fresh camera list (detects newly connected cameras)
-        if (EDSDK.EdsGetCameraList(out cameraList) != EdsError.EDS_ERR_OK)
+        var cameraListErr = EDSDK.EdsGetCameraList(out cameraList);
+        if (cameraListErr != EdsError.EDS_ERR_OK)
+        {
+            LastError =
+                $"Failed to enumerate cameras: {cameraListErr} (0x{(uint)cameraListErr:X8})";
+            Console.WriteLine($"[Connect] {LastError}");
             return false;
+        }
 
         try
         {
             int count;
-            if (EDSDK.EdsGetChildCount(cameraList, out count) != EdsError.EDS_ERR_OK || count == 0)
+            var childCountErr = EDSDK.EdsGetChildCount(cameraList, out count);
+            if (childCountErr != EdsError.EDS_ERR_OK)
+            {
+                LastError =
+                    $"Failed to query camera count: {childCountErr} (0x{(uint)childCountErr:X8})";
+                Console.WriteLine($"[Connect] {LastError}");
                 return false;
+            }
+
+            if (count == 0)
+            {
+                LastConnectionAttemptFoundNoCamera = true;
+                LastError = "No camera detected.";
+                Console.WriteLine("[Connect] No camera detected.");
+                return false;
+            }
 
             // get camera reference
-            if (EDSDK.EdsGetChildAtIndex(cameraList, 0, out _camera) != EdsError.EDS_ERR_OK)
+            var childErr = EDSDK.EdsGetChildAtIndex(cameraList, 0, out _camera);
+            if (childErr != EdsError.EDS_ERR_OK)
+            {
+                LastError = $"Failed to get camera reference: {childErr} (0x{(uint)childErr:X8})";
+                Console.WriteLine($"[Connect] {LastError}");
                 return false;
+            }
 
             // create event handler delegate BEFORE opening session
             // store as instance field to prevent garbage collection
@@ -73,7 +114,8 @@ public class EDSDKWrapper
             );
             if (err != EdsError.EDS_ERR_OK)
             {
-                Console.WriteLine($"Failed to register event handler: {err}");
+                LastError = $"Failed to register object event handler: {err} (0x{(uint)err:X8})";
+                Console.WriteLine($"[Connect] {LastError}");
                 EDSDK.EdsRelease(_camera);
                 _camera = IntPtr.Zero;
                 _objectEventHandler = null;
@@ -81,8 +123,13 @@ public class EDSDKWrapper
             }
 
             // NOW open session (after event handler registration)
-            if (EDSDK.EdsOpenSession(_camera) != EdsError.EDS_ERR_OK)
+            var openSessionErr = EDSDK.EdsOpenSession(_camera);
+            if (openSessionErr != EdsError.EDS_ERR_OK)
             {
+                LastError =
+                    $"Failed to open camera session: {openSessionErr} (0x{(uint)openSessionErr:X8})";
+                Console.WriteLine($"[Connect] {LastError}");
+
                 // unregister handler on failure
                 EDSDK.EdsSetObjectEventHandler(_camera, EdsObjectEvent.All, null, IntPtr.Zero);
                 EDSDK.EdsRelease(_camera);
@@ -92,6 +139,7 @@ public class EDSDKWrapper
             }
             ApplySaveDestinationToCamera();
 
+            LastError = null;
             Console.WriteLine("Camera connected successfully with event handlers registered");
             return true;
         }
@@ -253,10 +301,13 @@ public class EDSDKWrapper
         IntPtr stream;
         IntPtr evfImage;
 
+        // allocate memory buffer
         EDSDK.EdsCreateMemoryStream(0, out stream);
 
+        // create EVF image reference
         EDSDK.EdsCreateEvfImageRef(stream, out evfImage);
 
+        // download frame from camera
         var err = EDSDK.EdsDownloadEvfImage(_camera, evfImage);
 
         if (err != EdsError.EDS_ERR_OK)
@@ -264,7 +315,7 @@ public class EDSDKWrapper
             EDSDK.EdsRelease(evfImage);
             EDSDK.EdsRelease(stream);
 
-            // intelligent retry for device busy error
+            // smart retry on DEVICE_BUSY
             if ((uint)err == 0x00000081) // DEVICE_BUSY
             {
                 Thread.Sleep(50);
@@ -274,13 +325,17 @@ public class EDSDKWrapper
             return null;
         }
 
+        // get pointer to buffer data
         EDSDK.EdsGetPointer(stream, out var pointer);
 
+        // get buffer length
         EDSDK.EdsGetLength(stream, out var length);
 
+        // copy to managed byte array
         byte[] data = new byte[length];
         Marshal.Copy(pointer, data, 0, (int)length);
 
+        // release SDK resources
         EDSDK.EdsRelease(evfImage);
         EDSDK.EdsRelease(stream);
 
@@ -361,7 +416,7 @@ public class EDSDKWrapper
             );
         }
 
-        // release resources
+        // release SDK resources
         EDSDK.EdsRelease(evfImage);
         EDSDK.EdsRelease(stream);
 

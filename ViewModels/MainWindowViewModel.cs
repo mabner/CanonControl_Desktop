@@ -165,11 +165,19 @@ public partial class MainWindowViewModel : ViewModelBase
             }
             else
             {
-                Status = "Waiting for camera...";
-                System.Diagnostics.Debug.WriteLine("Connection failed, starting polling");
+                if (_cameraService.LastConnectionAttemptFoundNoCamera)
+                {
+                    Status = "Waiting for camera...";
+                    System.Diagnostics.Debug.WriteLine("Connection failed, starting polling");
 
-                // start polling to detect when camera becomes available
-                StartConnectionPolling();
+                    // start polling to detect when camera becomes available
+                    StartConnectionPolling();
+                }
+                else
+                {
+                    Status = _cameraService.LastConnectionError ?? "Connection failed";
+                    System.Diagnostics.Debug.WriteLine($"Connection failed: {Status}");
+                }
             }
         }
         catch (Exception ex)

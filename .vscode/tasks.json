@@ -1,0 +1,34 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "build",
+        "type": "process",
+        "command": "dotnet",
+        "args": [
+          "build",
+          "${workspaceFolder}"
+        ],
+        "problemMatcher": "$msCompile"
+      },
+      {
+        "label": "kill-gvfs",
+        "type": "shell",
+        "command": "killall gvfsd-gphoto2 || true && killall gvfsd || true"
+      },
+      {
+        "label": "enable-display",
+        "type": "shell",
+        "command": "xhost +SI:localuser:$(whoami) || true"
+      },
+      {
+        "label": "prepare-run",
+        "dependsOn": [
+          "build",
+          "kill-gvfs",
+          "enable-display"
+        ],
+        "dependsOrder": "sequence"
+      }
+    ]
+  }
