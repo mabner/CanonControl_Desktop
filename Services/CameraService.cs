@@ -138,6 +138,28 @@ public class CameraService
         return _sdk.GetCameraName();
     }
 
+    public int? GetBatteryPercentage()
+    {
+        lock (_cameraLock)
+        {
+            if (
+                !_sdk.TryGetPropertyValue(
+                    EdsPropertyID.PropID_BatteryLevel,
+                    out var rawBatteryValue
+                )
+            )
+                return null;
+
+            // battery level is returned as 0-100% directly from the camera
+            if (rawBatteryValue <= 100)
+                return (int)rawBatteryValue;
+
+            // higher values might indicate AC power or special states
+            // return as is if within valid range
+            return (int)rawBatteryValue;
+        }
+    }
+
     #endregion Connect and Startup
 
     #region Live View

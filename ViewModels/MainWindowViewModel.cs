@@ -88,6 +88,12 @@ public partial class MainWindowViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(WindowTitle))]
     private string _cameraName = string.Empty;
 
+    [ObservableProperty]
+    private int? _batteryPercentage;
+
+    [ObservableProperty]
+    private string _batteryStatus = "Battery Unknown";
+
     // computed property for window title
     public string WindowTitle =>
         string.IsNullOrEmpty(CameraName) ? "CanonControl" : $"CanonControl - {CameraName}";
@@ -160,6 +166,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 // stop polling once connected
                 StopConnectionPolling();
 
+                // start battery monitoring for the connected camera
+                StartBatteryPolling();
+
                 // navigate to Remote Capture panel by default after connection
                 NavigateToRemoteCapture();
             }
@@ -205,6 +214,67 @@ public partial class MainWindowViewModel : ViewModelBase
         IsCameraConnected = false;
         CameraName = string.Empty;
         Status = "Disconnected";
+        BatteryPercentage = null;
+        BatteryStatus = "Battery Unknown";
+        StopBatteryPolling();
+    }
+
+    private System.Threading.CancellationTokenSource? _batteryPollingCts;
+
+    private void StartBatteryPolling()
+    {
+        StopBatteryPolling();
+
+        _batteryPollingCts = new System.Threading.CancellationTokenSource();
+        var token = _batteryPollingCts.Token;
+
+        Task.Run(
+            async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await RefreshBatteryStateAsync();
+                        await Task.Delay(10000, token);
+                    }
+                    catch (System.OperationCanceledException)
+                    {
+                        break;
+                    }
+                    catch
+                    {
+                        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                        {
+                            BatteryPercentage = null;
+                            BatteryStatus = "Battery Unknown";
+                        });
+                    }
+                }
+            },
+            token
+        );
+    }
+
+    private void StopBatteryPolling()
+    {
+        _batteryPollingCts?.Cancel();
+        _batteryPollingCts?.Dispose();
+        _batteryPollingCts = null;
+    }
+
+    private async Task RefreshBatteryStateAsync()
+    {
+        var batteryPercentage = await Task.Run(() => _cameraService.GetBatteryPercentage());
+        var statusText = batteryPercentage.HasValue
+            ? $"Battery {batteryPercentage.Value}%"
+            : "Battery Unknown";
+
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            BatteryPercentage = batteryPercentage;
+            BatteryStatus = statusText;
+        });
     }
 
     private void StartConnectionPolling()

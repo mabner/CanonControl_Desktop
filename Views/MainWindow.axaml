@@ -67,7 +67,14 @@
                                            FontSize="14" />
                         </Button>
 
-                        <!-- Column 5 is the spacer (*) -->
+                        <!-- Battery Status -->
+                        <TextBlock Grid.Column="5"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Center"
+                                   Margin="4"
+                                   FontSize="14"
+                                   Text="{Binding BatteryStatus}" />
+
 
                         <!-- Connection buttons -->
                         <Button Grid.Column="6"
