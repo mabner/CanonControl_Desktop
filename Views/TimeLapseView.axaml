@@ -13,6 +13,26 @@
                FontWeight="Bold"
                Margin="0,0,0,8" />
 
+    <!-- TODO: Separate repeated code below into new axml (from exposure, focus, timelapse) -->
+    <!-- Current Camera Settings (Read-only) -->
+    <Border Background="#F5F5F5" Padding="12" CornerRadius="4">
+      <StackPanel Spacing="8">
+        <TextBlock Text="Current Camera Settings" FontSize="14" FontWeight="Bold" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Text="Speed:" Width="80" />
+          <TextBlock Text="{Binding ShutterSpeed, FallbackValue='--'}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Text="Aperture:" Width="80" />
+          <TextBlock Text="{Binding Aperture, FallbackValue='--'}" />
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <TextBlock Text="ISO:" Width="80" />
+          <TextBlock Text="{Binding Iso, FallbackValue='--'}" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
     <!-- Interval Seconds -->
     <StackPanel Spacing="8">
       <TextBlock Text="Interval (seconds):" FontSize="16" />
