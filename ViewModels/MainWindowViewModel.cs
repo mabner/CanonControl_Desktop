@@ -442,6 +442,8 @@ public partial class MainWindowViewModel : ViewModelBase
         _cameraService.SavePath = settings.SavePath;
         _cameraService.SaveDestination = settings.SaveDestination;
         _cameraService.LiveViewDuringAutoFocus = settings.LiveViewDuringAutoFocus;
+        _cameraService.FocusMediumSteps = settings.FocusMediumSteps;
+        _cameraService.FocusCoarseSteps = settings.FocusCoarseSteps;
 
         // store live view frame rate for use when starting live view
         _liveViewFrameRate = settings.LiveViewFrameRate;

@@ -28,6 +28,8 @@ public partial class SettingsViewModel : ViewModelBase
         _liveViewDuringAutoFocus = _settings.LiveViewDuringAutoFocus;
         _connectionTimeout = _settings.ConnectionTimeout;
         _saveDestinationIndex = SaveDestinationToIndex(_settings.SaveDestination);
+        _focusMediumSteps = _settings.FocusMediumSteps;
+        _focusCoarseSteps = _settings.FocusCoarseSteps;
 
         // Keep active runtime session aligned with persisted settings when opening Settings panel.
         _cameraService.SavePath = _savePath;
@@ -57,6 +59,22 @@ public partial class SettingsViewModel : ViewModelBase
     private int _connectionTimeout = 10;
 
     [ObservableProperty]
+    private int _focusMediumSteps = 3;
+
+    partial void OnFocusMediumStepsChanged(int value)
+    {
+        _cameraService.FocusMediumSteps = value;
+    }
+
+    [ObservableProperty]
+    private int _focusCoarseSteps = 6;
+
+    partial void OnFocusCoarseStepsChanged(int value)
+    {
+        _cameraService.FocusCoarseSteps = value;
+    }
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasHostSaveDestination))]
     private int _saveDestinationIndex = 0;
 
@@ -80,6 +98,10 @@ public partial class SettingsViewModel : ViewModelBase
 
     // available connection timeout options (in seconds)
     public List<int> ConnectionTimeoutOptions { get; } = new() { 5, 10, 15, 20, 30 };
+
+    // Available focus steps options
+    public List<int> FocusStepOptions { get; } =
+        new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 
     [RelayCommand]
     private async Task BrowseSavePath()
@@ -128,6 +150,8 @@ public partial class SettingsViewModel : ViewModelBase
         _settings.LiveViewDuringAutoFocus = LiveViewDuringAutoFocus;
         _settings.ConnectionTimeout = ConnectionTimeout;
         _settings.SaveDestination = IndexToSaveDestination(SaveDestinationIndex);
+        _settings.FocusMediumSteps = FocusMediumSteps;
+        _settings.FocusCoarseSteps = FocusCoarseSteps;
 
         // persist to file
         _settingsService.Save(_settings);

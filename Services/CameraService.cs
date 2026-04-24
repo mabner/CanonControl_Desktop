@@ -30,6 +30,8 @@ public class CameraService
 
     #region Settings
     public bool LiveViewDuringAutoFocus { get; set; } = true;
+    public int FocusMediumSteps { get; set; } = 3;
+    public int FocusCoarseSteps { get; set; } = 6;
     public string SavePath
     {
         get => _sdk.SavePath;
@@ -234,7 +236,20 @@ public class CameraService
 
     public void FocusNearFine()
     {
-        _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+        // serializes lens drive with live view and pauses EVF to avoid EDSDK contention.
+        lock (_cameraLock)
+        {
+            _isEvfDownloadPaused = true;
+            try
+            {
+                _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                Thread.Sleep(50);
+            }
+            finally
+            {
+                _isEvfDownloadPaused = false;
+            }
+        }
     }
 
     public void FocusNearMedium()
@@ -242,9 +257,39 @@ public class CameraService
         lock (_cameraLock)
         {
             _isEvfDownloadPaused = true;
-            _sdk.DriveLensNear(EdsEvfDriveLens.Near2);
-            Thread.Sleep(100);
-            _isEvfDownloadPaused = false;
+            try
+            {
+                for (int i = 0; i < FocusMediumSteps; i++)
+                {
+                    _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                    Thread.Sleep(50);
+                }
+            }
+            finally
+            {
+                _isEvfDownloadPaused = false;
+            }
+        }
+    }
+
+    public void FocusNearCoarse()
+    {
+        // serializes coarse lens steps with EVF the same way as fine focus.
+        lock (_cameraLock)
+        {
+            _isEvfDownloadPaused = true;
+            try
+            {
+                for (int i = 0; i < FocusCoarseSteps; i++)
+                {
+                    _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                    Thread.Sleep(50);
+                }
+            }
+            finally
+            {
+                _isEvfDownloadPaused = false;
+            }
         }
     }
 
@@ -262,24 +307,32 @@ public class CameraService
                 {
                     lock (_cameraLock)
                     {
-                        _sdk.DriveLensNear(EdsEvfDriveLens.Near2);
+                        _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
                     }
 
-                    await Task.Delay(100, token); // focus adjustment interval
+                    await Task.Delay(80, token); // focus adjustment interval
                 }
             },
             token
         );
     }
 
-    public void FocusNearCoarse()
-    {
-        _sdk.DriveLensNear(EdsEvfDriveLens.Near3);
-    }
-
     public void FocusFarFine()
     {
-        _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+        // focus stack uses this path; must not run concurrently with EVF downloads.
+        lock (_cameraLock)
+        {
+            _isEvfDownloadPaused = true;
+            try
+            {
+                _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                Thread.Sleep(50);
+            }
+            finally
+            {
+                _isEvfDownloadPaused = false;
+            }
+        }
     }
 
     public void FocusFarMedium()
@@ -287,9 +340,38 @@ public class CameraService
         lock (_cameraLock)
         {
             _isEvfDownloadPaused = true;
-            _sdk.DriveLensFar(EdsEvfDriveLens.Far2);
-            Thread.Sleep(100);
-            _isEvfDownloadPaused = false;
+            try
+            {
+                for (int i = 0; i < FocusMediumSteps; i++)
+                {
+                    _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                    Thread.Sleep(50);
+                }
+            }
+            finally
+            {
+                _isEvfDownloadPaused = false;
+            }
+        }
+    }
+
+    public void FocusFarCoarse()
+    {
+        lock (_cameraLock)
+        {
+            _isEvfDownloadPaused = true;
+            try
+            {
+                for (int i = 0; i < FocusCoarseSteps; i++)
+                {
+                    _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                    Thread.Sleep(50);
+                }
+            }
+            finally
+            {
+                _isEvfDownloadPaused = false;
+            }
         }
     }
 
@@ -307,19 +389,14 @@ public class CameraService
                 {
                     lock (_cameraLock)
                     {
-                        _sdk.DriveLensFar(EdsEvfDriveLens.Far2);
+                        _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
                     }
 
-                    await Task.Delay(100, token);
+                    await Task.Delay(80, token);
                 }
             },
             token
         );
-    }
-
-    public void FocusFarCoarse()
-    {
-        _sdk.DriveLensFar(EdsEvfDriveLens.Far3);
     }
 
     public void StartAutoFocus()

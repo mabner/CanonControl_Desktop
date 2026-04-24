@@ -1,11 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        xmlns:vm="using:CanonControl.ViewModels"
-        x:Class="CanonControl.Views.SettingsView"
-        x:DataType="vm:SettingsViewModel">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:vm="using:CanonControl.ViewModels"
+             x:Class="CanonControl.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
         <StackPanel Spacing="16" Margin="16">
                 <!-- Save Path -->
                 <TextBlock Text="Save Path" FontWeight="Bold" />
@@ -51,6 +51,20 @@
                           MinHeight="44"
                           HorizontalAlignment="Stretch"
                           ToolTip.Tip="How long to wait when searching for a camera connection" />
+
+                <!-- Focus Steps -->
+                <TextBlock Text="Focus Medium Steps" FontWeight="Bold" />
+                <ComboBox ItemsSource="{Binding FocusStepOptions}"
+                          SelectedItem="{Binding FocusMediumSteps}"
+                          MinHeight="44"
+                          HorizontalAlignment="Stretch"
+                          ToolTip.Tip="Number of fine steps to send per Medium focus trigger" />
+                <TextBlock Text="Focus Coarse Steps" FontWeight="Bold" />
+                <ComboBox ItemsSource="{Binding FocusStepOptions}"
+                          SelectedItem="{Binding FocusCoarseSteps}"
+                          MinHeight="44"
+                          HorizontalAlignment="Stretch"
+                          ToolTip.Tip="Number of fine steps to send per Coarse focus trigger" />
 
                 <!-- Save Button -->
                 <Button Content="Save Settings"
