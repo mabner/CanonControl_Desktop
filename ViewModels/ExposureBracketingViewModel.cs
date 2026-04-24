@@ -30,6 +30,15 @@ public partial class ExposureBracketingViewModel : ViewModelBase
     private string _status = "Ready";
 
     [ObservableProperty]
+    private string _shutterSpeed = string.Empty;
+
+    [ObservableProperty]
+    private string _aperture = string.Empty;
+
+    [ObservableProperty]
+    private string _iso = string.Empty;
+
+    [ObservableProperty]
     private int _exposureParameterIndex; // default to "Shutter Speed"
 
     public ExposureBracketingViewModel(CameraService cameraService)
@@ -216,5 +225,12 @@ public partial class ExposureBracketingViewModel : ViewModelBase
 
         IsRunning = false;
         Status = "Stopped";
+    }
+
+    public void UpdateCameraSettings()
+    {
+        ShutterSpeed = _cameraService.GetShutterSpeed();
+        Aperture = _cameraService.GetAperture();
+        Iso = _cameraService.GetIso();
     }
 }

@@ -28,6 +28,15 @@ public partial class TimeLapseViewModel : ViewModelBase
     [ObservableProperty]
     private string _status = "Ready";
 
+    [ObservableProperty]
+    private string _shutterSpeed = string.Empty;
+
+    [ObservableProperty]
+    private string _aperture = string.Empty;
+
+    [ObservableProperty]
+    private string _iso = string.Empty;
+
     public TimeLapseViewModel(CameraService cameraService)
     {
         _cameraService = cameraService;
@@ -120,5 +129,12 @@ public partial class TimeLapseViewModel : ViewModelBase
     public void StopLapse()
     {
         _cancellationTokenSource?.Cancel();
+    }
+
+    public void UpdateCameraSettings()
+    {
+        ShutterSpeed = _cameraService.GetShutterSpeed();
+        Aperture = _cameraService.GetAperture();
+        Iso = _cameraService.GetIso();
     }
 }

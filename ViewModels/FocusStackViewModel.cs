@@ -29,6 +29,15 @@ public partial class FocusStackViewModel : ViewModelBase
     private string _status = "Ready";
 
     [ObservableProperty]
+    private string _shutterSpeed = string.Empty;
+
+    [ObservableProperty]
+    private string _aperture = string.Empty;
+
+    [ObservableProperty]
+    private string _iso = string.Empty;
+
+    [ObservableProperty]
     private double _shootIntervalSeconds = 2.0;
 
     public FocusStackViewModel(CameraService cameraService)
@@ -137,5 +146,12 @@ public partial class FocusStackViewModel : ViewModelBase
     public void StopStack()
     {
         _cancellationTokenSource?.Cancel();
+    }
+
+    public void UpdateCameraSettings()
+    {
+        ShutterSpeed = _cameraService.GetShutterSpeed();
+        Aperture = _cameraService.GetAperture();
+        Iso = _cameraService.GetIso();
     }
 }

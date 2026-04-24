@@ -421,14 +421,26 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         else if (CurrentSidePanelViewModel is FocusStackViewModel fsvm)
         {
+            if (IsCameraConnected)
+            {
+                fsvm.UpdateCameraSettings();
+            }
             fsvm.PropertyChanged += OnFeatureViewModelPropertyChanged;
         }
         else if (CurrentSidePanelViewModel is ExposureBracketingViewModel ebvm)
         {
+            if (IsCameraConnected)
+            {
+                ebvm.UpdateCameraSettings();
+            }
             ebvm.PropertyChanged += OnFeatureViewModelPropertyChanged;
         }
         else if (CurrentSidePanelViewModel is TimeLapseViewModel tlvm)
         {
+            if (IsCameraConnected)
+            {
+                tlvm.UpdateCameraSettings();
+            }
             tlvm.PropertyChanged += OnFeatureViewModelPropertyChanged;
         }
     }
