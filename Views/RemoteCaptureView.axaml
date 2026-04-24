@@ -7,7 +7,6 @@
 
         <UserControl.Resources>
                 <helpers:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter" />
-                <helpers:EnumToBoolConverter x:Key="EnumToBoolConverter" />
         </UserControl.Resources>
 
         <StackPanel Spacing="16" Margin="16">
