@@ -639,7 +639,10 @@ public class CameraService
         {
             if (_sdk.GetNextPropertyValue(EdsPropertyID.PropID_Tv, out var nextValue))
             {
-                return _sdk.SetProperty(EdsPropertyID.PropID_Tv, nextValue);
+                var result = _sdk.SetProperty(EdsPropertyID.PropID_Tv, nextValue);
+                if (result)
+                    Thread.Sleep(200); // wait for camera to apply
+                return result;
             }
             return false;
         }
@@ -651,7 +654,10 @@ public class CameraService
         {
             if (_sdk.GetPreviousPropertyValue(EdsPropertyID.PropID_Tv, out var prevValue))
             {
-                return _sdk.SetProperty(EdsPropertyID.PropID_Tv, prevValue);
+                var result = _sdk.SetProperty(EdsPropertyID.PropID_Tv, prevValue);
+                if (result)
+                    Thread.Sleep(200); // wait for camera to apply
+                return result;
             }
             return false;
         }
@@ -663,7 +669,10 @@ public class CameraService
         {
             if (_sdk.GetNextPropertyValue(EdsPropertyID.PropID_Av, out var nextValue))
             {
-                return _sdk.SetProperty(EdsPropertyID.PropID_Av, nextValue);
+                var result = _sdk.SetProperty(EdsPropertyID.PropID_Av, nextValue);
+                if (result)
+                    Thread.Sleep(200); // wait for camera to apply
+                return result;
             }
             return false;
         }
@@ -675,7 +684,10 @@ public class CameraService
         {
             if (_sdk.GetPreviousPropertyValue(EdsPropertyID.PropID_Av, out var prevValue))
             {
-                return _sdk.SetProperty(EdsPropertyID.PropID_Av, prevValue);
+                var result = _sdk.SetProperty(EdsPropertyID.PropID_Av, prevValue);
+                if (result)
+                    Thread.Sleep(200); // wait for camera to apply
+                return result;
             }
             return false;
         }
@@ -687,7 +699,10 @@ public class CameraService
         {
             if (_sdk.GetNextPropertyValue(EdsPropertyID.PropID_ISOSpeed, out var nextValue))
             {
-                return _sdk.SetProperty(EdsPropertyID.PropID_ISOSpeed, nextValue);
+                var result = _sdk.SetProperty(EdsPropertyID.PropID_ISOSpeed, nextValue);
+                if (result)
+                    Thread.Sleep(200); // wait for camera to apply
+                return result;
             }
             return false;
         }
@@ -699,7 +714,10 @@ public class CameraService
         {
             if (_sdk.GetPreviousPropertyValue(EdsPropertyID.PropID_ISOSpeed, out var prevValue))
             {
-                return _sdk.SetProperty(EdsPropertyID.PropID_ISOSpeed, prevValue);
+                var result = _sdk.SetProperty(EdsPropertyID.PropID_ISOSpeed, prevValue);
+                if (result)
+                    Thread.Sleep(200); // wait for camera to apply
+                return result;
             }
             return false;
         }
@@ -711,6 +729,10 @@ public class CameraService
 
     public HistogramData? GetHistogramData()
     {
+        // skips EVF histogram while capture/transfer runs to avoid EDSDK contention with file download.
+        if (_isEvfDownloadPaused)
+            return null;
+
         lock (_cameraLock)
         {
             return _sdk.GetHistogramData();
