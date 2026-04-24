@@ -51,6 +51,10 @@ public class CameraService
         }
     }
 
+    // the currently selected camera folder name for image storage (e.g., "100CANON").
+    // empty string means use camera default.
+    public string SelectedCameraFolder { get; set; } = string.Empty;
+
     #endregion Settings
 
     #region Connect and Startup
@@ -161,6 +165,31 @@ public class CameraService
     }
 
     #endregion Connect and Startup
+
+
+    #region Folder Management
+
+
+    // retrieves a list of all folders on the camera's memory card.
+    public List<CameraFolderInfo> GetAvailableCameraFolders()
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.EnumerateCameraFolders();
+        }
+    }
+
+    // creates a new folder on the camera's memory card.
+    // the camera applies its standard naming convention (100CANON, 101CANON, etc).
+    public EdsError CreateCameraFolder()
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.CreateCameraFolder();
+        }
+    }
+
+    #endregion Folder Management
 
     #region Live View
 

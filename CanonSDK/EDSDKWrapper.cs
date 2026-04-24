@@ -223,6 +223,215 @@ public class EDSDKWrapper
         return EdsError.EDS_ERR_DEVICE_BUSY;
     }
 
+    #region Folder Management
+
+    // enumerates all folders on the camera's primary memory card volume.
+    // retrieves folder information (name, path) suitable for UI selection.
+    public List<CameraFolderInfo> EnumerateCameraFolders()
+    {
+        var folders = new List<CameraFolderInfo>();
+
+        if (_camera == IntPtr.Zero)
+            return folders;
+
+        // get the camera's volume (memory card)
+        IntPtr volume = IntPtr.Zero;
+        try
+        {
+            var volErr = EDSDK.EdsGetChildAtIndex(_camera, 0, out volume);
+            if (volErr != EdsError.EDS_ERR_OK)
+            {
+                Console.WriteLine($"[Folders] Failed to get camera volume: {volErr}");
+                return folders;
+            }
+
+            // find the DCIM folder and enumerate only its photo subfolders
+            int rootFolderCount = 0;
+            var countErr = EDSDK.EdsGetChildCount(volume, out rootFolderCount);
+            if (countErr != EdsError.EDS_ERR_OK)
+            {
+                Console.WriteLine($"[Folders] Failed to get folder count: {countErr}");
+                return folders;
+            }
+
+            IntPtr dcimFolder = IntPtr.Zero;
+            try
+            {
+                for (int i = 0; i < rootFolderCount && dcimFolder == IntPtr.Zero; i++)
+                {
+                    IntPtr folderRef = IntPtr.Zero;
+                    try
+                    {
+                        var getErr = EDSDK.EdsGetChildAtIndex(volume, i, out folderRef);
+                        if (getErr != EdsError.EDS_ERR_OK)
+                            continue;
+
+                        var infoErr = EDSDK.EdsGetDirectoryItemInfo(folderRef, out var info);
+                        if (infoErr != EdsError.EDS_ERR_OK)
+                            continue;
+
+                        if (
+                            info.isFolder
+                            && string.Equals(
+                                info.szFileName,
+                                "DCIM",
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                        )
+                        {
+                            dcimFolder = folderRef;
+                            folderRef = IntPtr.Zero; // ownership moves to dcimFolder
+                        }
+                    }
+                    finally
+                    {
+                        if (folderRef != IntPtr.Zero)
+                            EDSDK.EdsRelease(folderRef);
+                    }
+                }
+
+                if (dcimFolder != IntPtr.Zero)
+                {
+                    int dcimFolderCount = 0;
+                    var dcimCountErr = EDSDK.EdsGetChildCount(dcimFolder, out dcimFolderCount);
+                    if (dcimCountErr != EdsError.EDS_ERR_OK)
+                    {
+                        Console.WriteLine(
+                            $"[Folders] Failed to get DCIM child count: {dcimCountErr}"
+                        );
+                        return folders;
+                    }
+
+                    for (int i = 0; i < dcimFolderCount; i++)
+                    {
+                        IntPtr subfolderRef = IntPtr.Zero;
+                        try
+                        {
+                            var getErr = EDSDK.EdsGetChildAtIndex(dcimFolder, i, out subfolderRef);
+                            if (getErr != EdsError.EDS_ERR_OK)
+                                continue;
+
+                            var infoErr = EDSDK.EdsGetDirectoryItemInfo(subfolderRef, out var info);
+                            if (infoErr != EdsError.EDS_ERR_OK)
+                                continue;
+
+                            if (info.isFolder)
+                            {
+                                folders.Add(
+                                    new CameraFolderInfo
+                                    {
+                                        FolderName = info.szFileName,
+                                        FolderPath = $"/DCIM/{info.szFileName}",
+                                    }
+                                );
+                            }
+                        }
+                        finally
+                        {
+                            if (subfolderRef != IntPtr.Zero)
+                                EDSDK.EdsRelease(subfolderRef);
+                        }
+                    }
+                }
+                else
+                {
+                    // fallback: enumerate top-level folders if no DCIM folder exists
+                    for (int i = 0; i < rootFolderCount; i++)
+                    {
+                        IntPtr folderRef = IntPtr.Zero;
+                        try
+                        {
+                            var getErr = EDSDK.EdsGetChildAtIndex(volume, i, out folderRef);
+                            if (getErr != EdsError.EDS_ERR_OK)
+                                continue;
+
+                            var infoErr = EDSDK.EdsGetDirectoryItemInfo(folderRef, out var info);
+                            if (infoErr != EdsError.EDS_ERR_OK)
+                                continue;
+
+                            if (
+                                info.isFolder
+                                && !string.Equals(
+                                    info.szFileName,
+                                    "MISC",
+                                    StringComparison.OrdinalIgnoreCase
+                                )
+                            )
+                            {
+                                folders.Add(
+                                    new CameraFolderInfo
+                                    {
+                                        FolderName = info.szFileName,
+                                        FolderPath = $"/{info.szFileName}",
+                                    }
+                                );
+                            }
+                        }
+                        finally
+                        {
+                            if (folderRef != IntPtr.Zero)
+                                EDSDK.EdsRelease(folderRef);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                if (dcimFolder != IntPtr.Zero)
+                    EDSDK.EdsRelease(dcimFolder);
+            }
+        }
+        finally
+        {
+            if (volume != IntPtr.Zero)
+                EDSDK.EdsRelease(volume);
+        }
+
+        return folders;
+    }
+
+    // creates a new folder on the camera's memory card.
+    // the camera applies its standard naming convention (e.g., 100CANON, 101CANON).
+    public EdsError CreateCameraFolder()
+    {
+        if (_camera == IntPtr.Zero)
+        {
+            Console.WriteLine("[Folders] Cannot create folder: no camera connected");
+            return EdsError.EDS_ERR_DEVICE_BUSY;
+        }
+
+        // temporarily set SaveTo to Camera for folder creation
+        var originalSaveTo = SaveDestination;
+        SaveDestination = SaveDestination.Camera;
+        ApplySaveDestinationToCamera();
+
+        var err = RetryIfDeviceBusy(() => EDSDK.EdsCreateFolder(_camera));
+
+        // restore original SaveTo
+        SaveDestination = originalSaveTo;
+        ApplySaveDestinationToCamera();
+
+        if (err == EdsError.EDS_ERR_OK)
+        {
+            Console.WriteLine("[Folders] New folder created successfully");
+
+            // pump EDSDK events for a short window so creation events are delivered
+            var stopAt = DateTime.UtcNow.AddMilliseconds(500);
+            while (DateTime.UtcNow < stopAt)
+            {
+                EDSDK.EdsGetEvent();
+                Thread.Sleep(50);
+            }
+
+            return EdsError.EDS_ERR_OK;
+        }
+
+        Console.WriteLine($"[Folders] Failed to create folder: {err}");
+        return err;
+    }
+
+    #endregion Folder Management
+
     public string GetCameraName()
     {
         if (_camera == IntPtr.Zero)
@@ -940,6 +1149,16 @@ public class EDSDKWrapper
             lock (_downloadLock)
             {
                 DownloadImage(inRef);
+            }
+        }
+        else if (inEvent == EdsObjectEvent.DirItemCreated)
+        {
+            Console.WriteLine(
+                $"Folder/item created event detected (0x{inEvent:X8}) - releasing reference"
+            );
+            if (inRef != IntPtr.Zero)
+            {
+                EDSDK.EdsRelease(inRef);
             }
         }
         else if (inRef != IntPtr.Zero)

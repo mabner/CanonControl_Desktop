@@ -18,6 +18,7 @@ namespace CanonControl.CanonSDK;
 public enum EdsError : uint
 {
     EDS_ERR_OK = 0x00000000,
+    EDS_ERR_INVALID_FN_CALL = 0x00000060,
     EDS_ERR_DEVICE_BUSY = 0x00000081,
 }
 
@@ -82,6 +83,8 @@ public static class EdsPropertyID
     public const uint PropID_Tv = 0x00000406; // shutter speed (Time Value)
     public const uint PropID_SaveTo = 0x0000000B; // save destination
     public const uint PropID_BatteryLevel = 0x00000008; // battery level (0-100% or AC power)
+    public const uint PropID_CurrentFolder = 0x00000010; // current folder on camera
+    public const uint PropID_StillFolderName = 0x0000011E; // folder name for still images
 
     // histogram properties (from EdsEvfImageRef)
     public const uint Evf_HistogramY = 0x00000515;

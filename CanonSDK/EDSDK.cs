@@ -138,6 +138,9 @@ public static class EDSDK
     [DllImport(DLL)]
     public static extern EdsError EdsDownloadCancel(IntPtr inDirItemRef);
 
+    [DllImport(DLL)]
+    public static extern EdsError EdsCreateFolder(IntPtr inCameraRef);
+
     #endregion Image Download
 
     # region Live View

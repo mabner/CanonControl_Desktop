@@ -24,4 +24,8 @@ public class AppSettings
 
     // number of Near1/Far1 fine steps sent per Coarse focus press
     public int FocusCoarseSteps { get; set; } = 6;
+
+    // selected camera card folder name for image storage (e.g., "100CANON", "101CANON").
+    // empty string means use camera default.
+    public string SelectedCameraFolder { get; set; } = string.Empty;
 }

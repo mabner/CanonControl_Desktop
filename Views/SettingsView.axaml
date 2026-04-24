@@ -66,6 +66,37 @@
                           HorizontalAlignment="Stretch"
                           ToolTip.Tip="Number of fine steps to send per Coarse focus trigger" />
 
+                <!-- Camera Card Folder Selection -->
+                <TextBlock Text="Camera Card Folder" FontWeight="Bold" />
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                        <ComboBox Grid.Column="0"
+                                  ItemsSource="{Binding AvailableFolders}"
+                                  SelectedIndex="{Binding SelectedFolderIndex}"
+                                  MinHeight="44"
+                                  HorizontalAlignment="Stretch"
+                                  ToolTip.Tip="Select where to save images on the camera's memory card" />
+                        <Button Grid.Column="1"
+                                Content="Refresh"
+                                Command="{Binding RefreshCameraFoldersListCommand}"
+                                MinWidth="80" MinHeight="44"
+                                Margin="4,0,0,0"
+                                ToolTip.Tip="Refresh folder list from camera" />
+                        <Button Grid.Column="2"
+                                Content="Create"
+                                Command="{Binding CreateNewCameraFolderCommand}"
+                                MinWidth="80" MinHeight="44"
+                                Margin="4,0,0,0"
+                                ToolTip.Tip="Create a new folder on camera memory card" />
+                </Grid>
+
+                <!-- Status -->
+                <TextBlock Text="{Binding Status}"
+                           FontSize="12"
+                           Foreground="Red"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
+                           Margin="0,8,0,0" />
+
                 <!-- Save Button -->
                 <Button Content="Save Settings"
                         Command="{Binding SaveSettingsCommand}"
