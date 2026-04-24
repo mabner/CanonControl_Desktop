@@ -160,6 +160,14 @@
                                            TextWrapping="Wrap"
                                            FontSize="14" />
                         </Button>
+                        <Button MinWidth="80" MinHeight="50" Margin="4"
+                                Command="{Binding ToggleMirrorLockUpCommand}"
+                                IsEnabled="{Binding IsMirrorLockUpSupported}">
+                                <TextBlock Text="{Binding MirrorLockUpButtonText}"
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14" />
+                        </Button>
                 </StackPanel>
 
                 <!-- Side Panel (Row 1, Column 1) -->

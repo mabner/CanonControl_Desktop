@@ -85,6 +85,11 @@ public static class EdsPropertyID
     public const uint PropID_BatteryLevel = 0x00000008; // battery level (0-100% or AC power)
     public const uint PropID_CurrentFolder = 0x00000010; // current folder on camera
     public const uint PropID_StillFolderName = 0x0000011E; // folder name for still images
+    public const uint PropID_MirrorUpSetting = 0x0000050E; // mirror lock up setting
+    public const uint PropID_MirrorLockUpState = 0x0000050F; // mirror lock up state
+    public const uint PropID_EnableProperty = 0x01000000; // special property for enabling property access
+    public const uint PropParam_EnableMirrorUpSetting = 0x517F095D; // enable mirror up setting access
+    public const uint PropParam_EnableMirrorLockUpState = 0x00E13499; // enable mirror lock up state access
 
     // histogram properties (from EdsEvfImageRef)
     public const uint Evf_HistogramY = 0x00000515;

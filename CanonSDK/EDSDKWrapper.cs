@@ -126,6 +126,14 @@ public class EDSDKWrapper
                 return false;
             }
 
+            // enable mirror lock up properties before opening a session
+            // this is required by Canon to expose the mirror lock up controls
+            var enableMirrorUpErr = EnableMirrorLockUpProperties();
+            if (!enableMirrorUpErr)
+            {
+                Console.WriteLine("[MLU] Mirror lock up support not enabled on this camera");
+            }
+
             // NOW open session (after event handler registration)
             var openSessionErr = EDSDK.EdsOpenSession(_camera);
             if (openSessionErr != EdsError.EDS_ERR_OK)
@@ -197,6 +205,45 @@ public class EDSDKWrapper
                 $"Warning: Failed to set PropID_SaveTo (err={saveToErr}). Images may not download automatically."
             );
         }
+    }
+
+    public bool EnableMirrorLockUpProperties()
+    {
+        if (_camera == IntPtr.Zero)
+            return false;
+
+        uint mirrorUpId = EdsPropertyID.PropID_MirrorUpSetting;
+        var mirrorUpErr = EDSDK.EdsSetPropertyData(
+            _camera,
+            EdsPropertyID.PropID_EnableProperty,
+            (int)EdsPropertyID.PropParam_EnableMirrorUpSetting,
+            sizeof(uint),
+            ref mirrorUpId
+        );
+        if (mirrorUpErr != EdsError.EDS_ERR_OK)
+        {
+            Console.WriteLine($"[MLU] Cannot enable MirrorUpSetting property: {mirrorUpErr}");
+            return false;
+        }
+
+        uint mirrorLockStateId = EdsPropertyID.PropID_MirrorLockUpState;
+        var mirrorLockStateErr = EDSDK.EdsSetPropertyData(
+            _camera,
+            EdsPropertyID.PropID_EnableProperty,
+            (int)EdsPropertyID.PropParam_EnableMirrorLockUpState,
+            sizeof(uint),
+            ref mirrorLockStateId
+        );
+        if (mirrorLockStateErr != EdsError.EDS_ERR_OK)
+        {
+            Console.WriteLine(
+                $"[MLU] Cannot enable MirrorLockUpState property: {mirrorLockStateErr}"
+            );
+            return false;
+        }
+
+        Console.WriteLine("[MLU] Mirror lock up properties enabled");
+        return true;
     }
 
     private EdsError SetUInt32PropertyWithRetry(

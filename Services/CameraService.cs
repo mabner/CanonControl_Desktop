@@ -190,7 +190,73 @@ public class CameraService
     }
 
     #endregion Folder Management
+    #region Mirror Lock Up
 
+    public bool EnableMirrorLockUpProperties()
+    {
+        lock (_cameraLock)
+        {
+            return _sdk.EnableMirrorLockUpProperties();
+        }
+    }
+
+    // gets the current mirror lock up setting (0 = off, 1 = on)
+    public bool TryGetMirrorLockUpSetting(out bool enabled)
+    {
+        enabled = false;
+        lock (_cameraLock)
+        {
+            if (!_sdk.TryGetPropertyValue(EdsPropertyID.PropID_MirrorUpSetting, out var value))
+            {
+                Console.WriteLine("[MLU] MirrorUpSetting property read failed");
+                return false;
+            }
+
+            if (value == 0xffffffffu)
+            {
+                Console.WriteLine("[MLU] MirrorUpSetting indicates unsupported feature");
+                return false;
+            }
+
+            enabled = value == 1u;
+            Console.WriteLine($"[MLU] MirrorUpSetting read value: {value}");
+            return true;
+        }
+    }
+
+    // sets the mirror lock up setting (true = on, false = off)
+    public bool SetMirrorLockUpSetting(bool enabled)
+    {
+        lock (_cameraLock)
+        {
+            uint value = enabled ? 1u : 0u;
+            bool result = _sdk.SetProperty(EdsPropertyID.PropID_MirrorUpSetting, value);
+            Console.WriteLine($"[MLU] Set MirrorUpSetting to {value}, result: {result}");
+            if (!result)
+            {
+                Console.WriteLine(
+                    "[MLU] Failed to set MirrorUpSetting - property may not be supported by this camera"
+                );
+                return false;
+            }
+            return true;
+        }
+    }
+
+    // gets the current mirror lock up state (0 = unlocked, 1 = locked)
+    public bool GetMirrorLockUpState()
+    {
+        lock (_cameraLock)
+        {
+            if (_sdk.TryGetPropertyValue(EdsPropertyID.PropID_MirrorLockUpState, out var value))
+            {
+                return value == 1;
+            }
+            return false;
+        }
+    }
+
+    #endregion Mirror Lock Up
     #region Live View
 
     public async Task StartLiveViewAsync(Action<byte[]> onFrame, int frameRate = 30)
