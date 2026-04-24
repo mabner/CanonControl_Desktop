@@ -44,6 +44,7 @@ public partial class ExposureBracketingViewModel : ViewModelBase
     public ExposureBracketingViewModel(CameraService cameraService)
     {
         _cameraService = cameraService;
+        UpdateCameraSettings();
     }
 
     partial void OnStepSizeIndexChanged(int value)

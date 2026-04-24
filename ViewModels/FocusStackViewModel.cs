@@ -43,6 +43,7 @@ public partial class FocusStackViewModel : ViewModelBase
     public FocusStackViewModel(CameraService cameraService)
     {
         _cameraService = cameraService;
+        UpdateCameraSettings();
     }
 
     public async Task StartStack()

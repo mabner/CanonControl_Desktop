@@ -40,6 +40,7 @@ public partial class TimeLapseViewModel : ViewModelBase
     public TimeLapseViewModel(CameraService cameraService)
     {
         _cameraService = cameraService;
+        UpdateCameraSettings();
     }
 
     public async Task StartLapse()
