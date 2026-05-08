@@ -17,12 +17,15 @@ public partial class RemoteCaptureViewModel : ViewModelBase
     private bool _isPolling;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExposureSummary))]
     private string _shutterSpeed = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExposureSummary))]
     private string _aperture = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExposureSummary))]
     private string _iso = string.Empty;
 
     [ObservableProperty]
@@ -202,6 +205,9 @@ public partial class RemoteCaptureViewModel : ViewModelBase
     {
         IsCompositionMirrored = !IsCompositionMirrored;
     }
+
+    public string ExposureSummary =>
+        string.IsNullOrWhiteSpace(ShutterSpeed) ? "--" : $"{ShutterSpeed} - {Aperture} - {Iso}";
 
     [RelayCommand]
     private void RotateComposition()

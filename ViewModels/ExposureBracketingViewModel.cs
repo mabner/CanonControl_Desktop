@@ -30,12 +30,15 @@ public partial class ExposureBracketingViewModel : ViewModelBase
     private string _status = "Ready";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExposureSummary))]
     private string _shutterSpeed = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExposureSummary))]
     private string _aperture = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExposureSummary))]
     private string _iso = string.Empty;
 
     [ObservableProperty]
@@ -46,6 +49,9 @@ public partial class ExposureBracketingViewModel : ViewModelBase
         _cameraService = cameraService;
         UpdateCameraSettings();
     }
+
+    public string ExposureSummary =>
+        string.IsNullOrWhiteSpace(ShutterSpeed) ? "--" : $"{ShutterSpeed} - {Aperture} - {Iso}";
 
     partial void OnStepSizeIndexChanged(int value)
     {

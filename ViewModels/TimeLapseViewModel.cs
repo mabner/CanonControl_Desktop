@@ -29,12 +29,15 @@ public partial class TimeLapseViewModel : ViewModelBase
     private string _status = "Ready";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExposureSummary))]
     private string _shutterSpeed = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExposureSummary))]
     private string _aperture = string.Empty;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExposureSummary))]
     private string _iso = string.Empty;
 
     public TimeLapseViewModel(CameraService cameraService)
@@ -42,6 +45,9 @@ public partial class TimeLapseViewModel : ViewModelBase
         _cameraService = cameraService;
         UpdateCameraSettings();
     }
+
+    public string ExposureSummary =>
+        string.IsNullOrWhiteSpace(ShutterSpeed) ? "--" : $"{ShutterSpeed} - {Aperture} - {Iso}";
 
     public async Task StartLapse()
     {
