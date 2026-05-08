@@ -612,6 +612,14 @@ public partial class MainWindowViewModel : ViewModelBase
                 // explicitly notify focus commands to re-evaluate CanExecute
                 StartFocusNearCommand.NotifyCanExecuteChanged();
                 StartFocusFarCommand.NotifyCanExecuteChanged();
+                StartFocusNearMediumCommand.NotifyCanExecuteChanged();
+                StartFocusNearCoarseCommand.NotifyCanExecuteChanged();
+                StartFocusFarMediumCommand.NotifyCanExecuteChanged();
+                StartFocusFarCoarseCommand.NotifyCanExecuteChanged();
+                FocusNearMediumCommand.NotifyCanExecuteChanged();
+                FocusNearCoarseCommand.NotifyCanExecuteChanged();
+                FocusFarMediumCommand.NotifyCanExecuteChanged();
+                FocusFarCoarseCommand.NotifyCanExecuteChanged();
                 StopFocusCommand.NotifyCanExecuteChanged();
                 StartAutoFocusCommand.NotifyCanExecuteChanged();
                 StopAutoFocusCommand.NotifyCanExecuteChanged();
@@ -638,6 +646,14 @@ public partial class MainWindowViewModel : ViewModelBase
                 // explicitly notify focus commands to re-evaluate CanExecute
                 StartFocusNearCommand.NotifyCanExecuteChanged();
                 StartFocusFarCommand.NotifyCanExecuteChanged();
+                StartFocusNearMediumCommand.NotifyCanExecuteChanged();
+                StartFocusNearCoarseCommand.NotifyCanExecuteChanged();
+                StartFocusFarMediumCommand.NotifyCanExecuteChanged();
+                StartFocusFarCoarseCommand.NotifyCanExecuteChanged();
+                FocusNearMediumCommand.NotifyCanExecuteChanged();
+                FocusNearCoarseCommand.NotifyCanExecuteChanged();
+                FocusFarMediumCommand.NotifyCanExecuteChanged();
+                FocusFarCoarseCommand.NotifyCanExecuteChanged();
                 StopFocusCommand.NotifyCanExecuteChanged();
                 StartAutoFocusCommand.NotifyCanExecuteChanged();
                 StopAutoFocusCommand.NotifyCanExecuteChanged();
@@ -703,9 +719,57 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void StartFocusNearMedium()
+    {
+        _cameraService.StartFocusNearMedium();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void StartFocusNearCoarse()
+    {
+        _cameraService.StartFocusNearCoarse();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void StartFocusFarMedium()
+    {
+        _cameraService.StartFocusFarMedium();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void StartFocusFarCoarse()
+    {
+        _cameraService.StartFocusFarCoarse();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
     private void StartFocusFar()
     {
         _cameraService.StartFocusFar();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void FocusNearMedium()
+    {
+        _cameraService.FocusNearMedium();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void FocusNearCoarse()
+    {
+        _cameraService.FocusNearCoarse();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void FocusFarMedium()
+    {
+        _cameraService.FocusFarMedium();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]
+    private void FocusFarCoarse()
+    {
+        _cameraService.FocusFarCoarse();
     }
 
     [RelayCommand(CanExecute = nameof(CanExecuteFocusCommands))]

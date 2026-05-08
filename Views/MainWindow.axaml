@@ -122,52 +122,94 @@
                 </Viewbox>
 
                 <!-- Control Panel (Row 2, Column 0) -->
-                <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" Margin="4">
-                        <Button MinWidth="80" MinHeight="50" Margin="4"
-                                Command="{Binding ToggleLiveViewCommand}"
-                                IsEnabled="{Binding IsCameraConnected}">
-                                <TextBlock Text="Live&#x0a;View"
-                                           TextAlignment="Center"
-                                           TextWrapping="Wrap"
-                                           FontSize="14" />
-                        </Button>
-                        <Button x:Name="FocusNearButton"
-                                MinWidth="80" MinHeight="50" Margin="4">
-                                <TextBlock Text="Focus&#x0a;Near"
-                                           TextAlignment="Center"
-                                           TextWrapping="Wrap"
-                                           FontSize="14" />
-                        </Button>
-                        <Button x:Name="FocusFarButton"
-                                MinWidth="80" MinHeight="50" Margin="4">
-                                <TextBlock Text="Focus&#x0a;Far"
-                                           TextAlignment="Center"
-                                           TextWrapping="Wrap"
-                                           FontSize="14" />
-                        </Button>
-                        <Button x:Name="AutoFocusButton"
-                                MinWidth="80" MinHeight="50" Margin="4">
-                                <TextBlock Text="Auto&#x0a;Focus"
-                                           TextAlignment="Center"
-                                           TextWrapping="Wrap"
-                                           FontSize="14" />
-                        </Button>
-                        <Button MinWidth="90" MinHeight="50" Margin="4"
-                                Command="{Binding ContextCaptureCommand}"
-                                IsEnabled="{Binding IsCameraConnected}">
-                                <TextBlock Text="{Binding ContextCaptureLabel}"
-                                           TextAlignment="Center"
-                                           TextWrapping="Wrap"
-                                           FontSize="14" />
-                        </Button>
-                        <Button MinWidth="80" MinHeight="50" Margin="4"
-                                Command="{Binding ToggleMirrorLockUpCommand}"
-                                IsEnabled="{Binding IsMirrorLockUpSupported}">
-                                <TextBlock Text="{Binding MirrorLockUpButtonText}"
-                                           TextAlignment="Center"
-                                           TextWrapping="Wrap"
-                                           FontSize="14" />
-                        </Button>
+                <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Vertical" Margin="4" Spacing="4">
+                        <StackPanel Orientation="Vertical" Margin="4" Spacing="4">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <Button MinWidth="90" MinHeight="50" Margin="4"
+                                                Command="{Binding ToggleLiveViewCommand}"
+                                                IsEnabled="{Binding IsCameraConnected}">
+                                                <TextBlock Text="Live&#x0a;View"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="14" />
+                                        </Button>
+                                        <Button MinWidth="90" MinHeight="50" Margin="4"
+                                                Command="{Binding ContextCaptureCommand}"
+                                                IsEnabled="{Binding IsCameraConnected}">
+                                                <TextBlock Text="{Binding ContextCaptureLabel}"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="14" />
+                                        </Button>
+                                        <Button MinWidth="80" MinHeight="50" Margin="4"
+                                                Command="{Binding ToggleMirrorLockUpCommand}"
+                                                IsEnabled="{Binding IsMirrorLockUpSupported}">
+                                                <TextBlock Text="{Binding MirrorLockUpButtonText}"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="14" />
+                                        </Button>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <Button x:Name="FocusNearCoarseButton" MinWidth="60" MinHeight="50" Margin="4"
+                                                Command="{Binding FocusNearCoarseCommand}"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text="&lt;&lt;&lt;"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="18" />
+                                        </Button>
+                                        <Button x:Name="FocusNearMediumButton" MinWidth="60" MinHeight="50" Margin="4"
+                                                Command="{Binding FocusNearMediumCommand}"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text="&lt;&lt;"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="18" />
+                                        </Button>
+                                        <Button x:Name="FocusNearButton"
+                                                MinWidth="80" MinHeight="50" Margin="4"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text="&lt;"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="24" />
+                                        </Button>
+                                        <Button x:Name="FocusFarButton"
+                                                MinWidth="80" MinHeight="50" Margin="4"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text=">"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="24" />
+                                        </Button>
+                                        <Button x:Name="FocusFarMediumButton" MinWidth="60" MinHeight="50" Margin="4"
+                                                Command="{Binding FocusFarMediumCommand}"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text=">>"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="18" />
+                                        </Button>
+                                        <Button x:Name="FocusFarCoarseButton" MinWidth="60" MinHeight="50" Margin="4"
+                                                Command="{Binding FocusFarCoarseCommand}"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text=">>>"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="18" />
+                                        </Button>
+                                        <Button x:Name="AutoFocusButton"
+                                                MinWidth="80" MinHeight="50" Margin="4"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text="Auto&#x0a;Focus"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="14" />
+                                        </Button>
+                                </StackPanel>
+                        </StackPanel>
                 </StackPanel>
 
                 <!-- Side Panel (Row 1, Column 1) -->

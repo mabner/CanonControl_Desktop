@@ -516,6 +516,114 @@ public class CameraService
         );
     }
 
+    public void StartFocusNearMedium()
+    {
+        StopFocus();
+
+        _focusCts = new CancellationTokenSource();
+        var token = _focusCts.Token;
+
+        Task.Run(
+            async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    for (int i = 0; i < FocusMediumSteps; i++)
+                    {
+                        lock (_cameraLock)
+                        {
+                            _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                        }
+                        await Task.Delay(50, token);
+                    }
+                    await Task.Delay(80, token);
+                }
+            },
+            token
+        );
+    }
+
+    public void StartFocusNearCoarse()
+    {
+        StopFocus();
+
+        _focusCts = new CancellationTokenSource();
+        var token = _focusCts.Token;
+
+        Task.Run(
+            async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    for (int i = 0; i < FocusCoarseSteps; i++)
+                    {
+                        lock (_cameraLock)
+                        {
+                            _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                        }
+                        await Task.Delay(50, token);
+                    }
+                    await Task.Delay(80, token);
+                }
+            },
+            token
+        );
+    }
+
+    public void StartFocusFarMedium()
+    {
+        StopFocus();
+
+        _focusCts = new CancellationTokenSource();
+        var token = _focusCts.Token;
+
+        Task.Run(
+            async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    for (int i = 0; i < FocusMediumSteps; i++)
+                    {
+                        lock (_cameraLock)
+                        {
+                            _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                        }
+                        await Task.Delay(50, token);
+                    }
+                    await Task.Delay(80, token);
+                }
+            },
+            token
+        );
+    }
+
+    public void StartFocusFarCoarse()
+    {
+        StopFocus();
+
+        _focusCts = new CancellationTokenSource();
+        var token = _focusCts.Token;
+
+        Task.Run(
+            async () =>
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    for (int i = 0; i < FocusCoarseSteps; i++)
+                    {
+                        lock (_cameraLock)
+                        {
+                            _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                        }
+                        await Task.Delay(50, token);
+                    }
+                    await Task.Delay(80, token);
+                }
+            },
+            token
+        );
+    }
+
     public void StartAutoFocus()
     {
         SetEvfAutoFocus(true);

@@ -71,6 +71,82 @@ public partial class MainWindow : Window
             RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
             true
         );
+
+        FocusNearMediumButton.AddHandler(
+            InputElement.PointerPressedEvent,
+            OnFocusNearMediumPressed,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+        FocusNearMediumButton.AddHandler(
+            InputElement.PointerReleasedEvent,
+            OnFocusReleased,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+        FocusNearMediumButton.AddHandler(
+            InputElement.PointerCaptureLostEvent,
+            OnFocusReleased,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+
+        FocusNearCoarseButton.AddHandler(
+            InputElement.PointerPressedEvent,
+            OnFocusNearCoarsePressed,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+        FocusNearCoarseButton.AddHandler(
+            InputElement.PointerReleasedEvent,
+            OnFocusReleased,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+        FocusNearCoarseButton.AddHandler(
+            InputElement.PointerCaptureLostEvent,
+            OnFocusReleased,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+
+        FocusFarMediumButton.AddHandler(
+            InputElement.PointerPressedEvent,
+            OnFocusFarMediumPressed,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+        FocusFarMediumButton.AddHandler(
+            InputElement.PointerReleasedEvent,
+            OnFocusReleased,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+        FocusFarMediumButton.AddHandler(
+            InputElement.PointerCaptureLostEvent,
+            OnFocusReleased,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+
+        FocusFarCoarseButton.AddHandler(
+            InputElement.PointerPressedEvent,
+            OnFocusFarCoarsePressed,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+        FocusFarCoarseButton.AddHandler(
+            InputElement.PointerReleasedEvent,
+            OnFocusReleased,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
+        FocusFarCoarseButton.AddHandler(
+            InputElement.PointerCaptureLostEvent,
+            OnFocusReleased,
+            RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
+            true
+        );
     }
 
     private void OnFocusNearPressed(object? sender, PointerPressedEventArgs e)
@@ -96,6 +172,26 @@ public partial class MainWindow : Window
     private void OnAutoFocusReleased(object? sender, PointerEventArgs e)
     {
         ExecuteVmCommand(vm => vm.StopAutoFocusCommand);
+    }
+
+    private void OnFocusNearMediumPressed(object? sender, PointerPressedEventArgs e)
+    {
+        ExecuteVmCommand(vm => vm.StartFocusNearMediumCommand);
+    }
+
+    private void OnFocusNearCoarsePressed(object? sender, PointerPressedEventArgs e)
+    {
+        ExecuteVmCommand(vm => vm.StartFocusNearCoarseCommand);
+    }
+
+    private void OnFocusFarMediumPressed(object? sender, PointerPressedEventArgs e)
+    {
+        ExecuteVmCommand(vm => vm.StartFocusFarMediumCommand);
+    }
+
+    private void OnFocusFarCoarsePressed(object? sender, PointerPressedEventArgs e)
+    {
+        ExecuteVmCommand(vm => vm.StartFocusFarCoarseCommand);
     }
 
     private void ExecuteVmCommand(Func<MainWindowViewModel, ICommand> getCommand)
