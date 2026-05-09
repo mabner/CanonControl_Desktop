@@ -1,24 +1,30 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-      {
-        "name": "CanonControl (Debug Raspberry GUI)",
-        "type": "coreclr",
-        "request": "launch",
-  
-        "program": "${workspaceFolder}/bin/Debug/net10.0/CanonControl.dll",
-        "cwd": "${workspaceFolder}",
-  
-        "console": "integratedTerminal",
-  
-        "stopAtEntry": false,
-  
-        "env": {
-          "DISPLAY": ":0",
-          "DOTNET_EnableDiagnostics": "1"
-        },
-  
-        "preLaunchTask": "prepare-run"
-      }
-    ]
-  }
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "CanonControl (Local)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/bin/Debug/net10.0/CanonControl.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "CanonControl (Raspberry/Linux GUI)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "prepare-run",
+      "program": "${workspaceFolder}/bin/Debug/net10.0/CanonControl.dll",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "DISPLAY": ":0",
+        "DOTNET_EnableDiagnostics": "1"
+      },
+      "stopAtEntry": false
+    }
+  ]
+}
