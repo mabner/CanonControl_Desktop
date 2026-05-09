@@ -31,6 +31,14 @@
                           HorizontalAlignment="Stretch"
                           ToolTip.Tip="Camera only: saves to memory card (no PC download). PC only: downloads to PC, nothing on card. Camera + PC: saves to card and downloads to PC." />
 
+                <!-- Image Format -->
+                <TextBlock Text="Image Format" FontWeight="Bold" />
+                <ComboBox ItemsSource="{Binding ImageFormatOptions}"
+                          SelectedIndex="{Binding ImageFormatIndex}"
+                          MinHeight="44"
+                          HorizontalAlignment="Stretch"
+                          ToolTip.Tip="Select the image format/quality to record on the camera." />
+
                 <!-- Live View Frame Rate -->
                 <TextBlock Text="Live View Frame Rate (fps)" FontWeight="Bold" />
                 <ComboBox ItemsSource="{Binding FrameRateOptions}"

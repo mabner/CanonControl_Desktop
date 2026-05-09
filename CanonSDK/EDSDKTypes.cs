@@ -81,6 +81,7 @@ public static class EdsPropertyID
     public const uint PropID_ISOSpeed = 0x00000402;
     public const uint PropID_Av = 0x00000405; // aperture value
     public const uint PropID_Tv = 0x00000406; // shutter speed (Time Value)
+    public const uint PropID_ImageQuality = 0x00000100; // image quality (RAW, JPEG, etc)
     public const uint PropID_SaveTo = 0x0000000B; // save destination
     public const uint PropID_BatteryLevel = 0x00000008; // battery level (0-100% or AC power)
     public const uint PropID_CurrentFolder = 0x00000010; // current folder on camera

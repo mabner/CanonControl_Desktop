@@ -46,6 +46,18 @@ public partial class SettingsViewModel : ViewModelBase
         _cameraService.SavePath = _savePath;
         _cameraService.SaveDestination = _settings.SaveDestination;
         _cameraService.LiveViewDuringAutoFocus = _liveViewDuringAutoFocus;
+
+        // Try to fetch current image format from camera
+        try
+        {
+            var currentFormat = _cameraService.GetImageFormat();
+            _imageFormatIndex = ImageFormatToIndex(currentFormat);
+        }
+        catch
+        {
+            _imageFormatIndex = 0; // Default to JPEG if camera not connected
+        }
+
         RefreshCameraFolders();
     }
 
@@ -116,9 +128,21 @@ public partial class SettingsViewModel : ViewModelBase
         _cameraService.SaveDestination = IndexToSaveDestination(value);
     }
 
+    [ObservableProperty]
+    private int _imageFormatIndex = 0;
+
+    partial void OnImageFormatIndexChanged(int value)
+    {
+        _cameraService.SetImageFormat(IndexToImageFormat(value));
+    }
+
     // Human-readable labels for the save destination ComboBox
     public List<string> SaveDestinationOptions { get; } =
         new() { "Camera only", "PC only", "Camera + PC" };
+
+    // Human-readable labels for the image format ComboBox
+    public List<string> ImageFormatOptions { get; } =
+        new() { "JPEG (Large)", "RAW", "RAW + JPEG" };
 
     public bool HasHostSaveDestination =>
         IndexToSaveDestination(SaveDestinationIndex) != SaveDestination.Camera;
@@ -278,5 +302,21 @@ public partial class SettingsViewModel : ViewModelBase
             1 => SaveDestination.Host,
             2 => SaveDestination.Both,
             _ => SaveDestination.Camera,
+        };
+
+    private static int ImageFormatToIndex(ImageFormat f) =>
+        f switch
+        {
+            ImageFormat.RAW => 1,
+            ImageFormat.RAWAndJPEG => 2,
+            _ => 0, // JPEG
+        };
+
+    private static ImageFormat IndexToImageFormat(int index) =>
+        index switch
+        {
+            1 => ImageFormat.RAW,
+            2 => ImageFormat.RAWAndJPEG,
+            _ => ImageFormat.JPEG,
         };
 }

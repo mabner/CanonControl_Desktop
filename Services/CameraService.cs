@@ -743,6 +743,36 @@ public class CameraService
         }
     }
 
+    public ImageFormat GetImageFormat()
+    {
+        lock (_cameraLock)
+        {
+            if (_sdk.TryGetPropertyValue(EdsPropertyID.PropID_ImageQuality, out uint value))
+            {
+                return (ImageFormat)value;
+            }
+            return ImageFormat.JPEG; // Default fallback
+        }
+    }
+
+    public void SetImageFormat(ImageFormat format)
+    {
+        lock (_cameraLock)
+        {
+            if (_sdk.GetAvailablePropertyValues(EdsPropertyID.PropID_ImageQuality, out uint[] available))
+            {
+                Console.WriteLine("[ImageFormat] Available values:");
+                foreach (var val in available)
+                {
+                    Console.WriteLine($"  - 0x{val:X8}");
+                }
+            }
+
+            bool success = _sdk.SetProperty(EdsPropertyID.PropID_ImageQuality, (uint)format);
+            Console.WriteLine($"[ImageFormat] Set {(uint)format:X8} success: {success}");
+        }
+    }
+
     public bool IsAutoIso()
     {
         lock (_cameraLock)
