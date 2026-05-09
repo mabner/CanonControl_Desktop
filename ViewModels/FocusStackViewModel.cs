@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CanonControl.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace CanonControl.ViewModels;
 
@@ -21,6 +22,7 @@ public partial class FocusStackViewModel : ViewModelBase
 {
     private readonly CameraService _cameraService;
     private CancellationTokenSource? _cancellationTokenSource;
+    private CancellationTokenSource? _pollCts; // cancellation token for the step-position polling timer.
 
     [ObservableProperty]
     private int _numberOfShots = 10;
@@ -52,14 +54,147 @@ public partial class FocusStackViewModel : ViewModelBase
     [ObservableProperty]
     private double _shootIntervalSeconds = 2.0;
 
+    // --- A/B point registration ---
+
+    // raw step counter value recorded when the user pressed Set A (always 0 after reset).
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPointASet))]
+    [NotifyPropertyChangedFor(nameof(IsRangeValid))]
+    [NotifyPropertyChangedFor(nameof(PointALabel))]
+    [NotifyPropertyChangedFor(nameof(RangeLabel))]
+    [NotifyCanExecuteChangedFor(nameof(RegisterPointBCommand))]
+    private int? _focusPointA;
+
+    // raw step counter value recorded when the user pressed Set B.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPointBSet))]
+    [NotifyPropertyChangedFor(nameof(IsRangeValid))]
+    [NotifyPropertyChangedFor(nameof(PointBLabel))]
+    [NotifyPropertyChangedFor(nameof(RangeLabel))]
+    private int? _focusPointB;
+
+    // live display of the current focus step offset from point A (shown while user drives focus to B).
+    [ObservableProperty]
+    private string _liveStepLabel = "Current: --";
+
     public FocusStackViewModel(CameraService cameraService)
     {
         _cameraService = cameraService;
         UpdateCameraSettings();
+        StartPositionPolling(); // begin polling the step counter so B label stays current.
     }
 
     public string ExposureSummary =>
         string.IsNullOrWhiteSpace(ShutterSpeed) ? "--" : $"{ShutterSpeed} - {Aperture} - {Iso}";
+
+    // --- Computed properties for A/B state ---
+
+    // true once the user has pressed Set A.
+    public bool IsPointASet => FocusPointA.HasValue;
+
+    // true once the user has pressed Set B.
+    public bool IsPointBSet => FocusPointB.HasValue;
+
+    // true when both points are set and B is strictly further than A.
+    public bool IsRangeValid => FocusPointA.HasValue && FocusPointB.HasValue && FocusPointB.Value > FocusPointA.Value;
+
+    // human-readable label for point A shown in the UI.
+    public string PointALabel => FocusPointA.HasValue ? "A: 0 (near)" : "A: --";
+
+    // human-readable label for point B shown in the UI.
+    public string PointBLabel => FocusPointB.HasValue ? $"B: +{FocusPointB.Value} steps" : "B: --";
+
+    // human-readable summary of the total range between A and B.
+    public string RangeLabel => IsRangeValid
+        ? $"Range: {FocusPointB!.Value - FocusPointA!.Value} steps"
+        : "Range: -- steps";
+
+    // --- Commands ---
+
+    // registers the current focus position as point A; resets the step counter to zero.
+    [RelayCommand]
+    private void RegisterPointA()
+    {
+        _cameraService.ResetFocusStepPosition();
+        FocusPointA = 0;
+        FocusPointB = null; // clear B so the user must re-register after moving to the new A.
+        RecalculateShots();
+        Status = "Point A registered. Drive focus to far end and press Set B.";
+    }
+
+    // registers the current step counter value as point B; validates that B > A.
+    [RelayCommand(CanExecute = nameof(IsPointASet))]
+    private void RegisterPointB()
+    {
+        int current = _cameraService.FocusStepPosition;
+        if (current <= (FocusPointA ?? 0))
+        {
+            Status = "Point B must be further than point A. Drive focus farther and try again.";
+            return;
+        }
+        FocusPointB = current;
+        RecalculateShots();
+        Status = $"Points set: range = {RangeLabel}, {NumberOfShots} shots calculated.";
+    }
+
+    // clears both A and B points and reverts to manual shot count.
+    [RelayCommand]
+    private void ClearPoints()
+    {
+        FocusPointA = null;
+        FocusPointB = null;
+        LiveStepLabel = "Current: --";
+        Status = "Range cleared. Set A and B to use automatic shot calculation.";
+    }
+
+    // called automatically when StepSize changes so the shot count stays in sync.
+    partial void OnStepSizeChanged(int value) => RecalculateShots();
+
+    // --- Shot count calculation ---
+
+    // calculates NumberOfShots from the A/B range and current StepSize.
+    private void RecalculateShots()
+    {
+        if (!IsRangeValid || StepSize <= 0)
+            return;
+
+        int range = FocusPointB!.Value - FocusPointA!.Value;
+        NumberOfShots = Math.Max(2, (int)Math.Ceiling((double)range / StepSize) + 1);
+    }
+
+    // --- Position polling (sub-task 7.3.5) ---
+
+    // starts a 500 ms polling loop that refreshes the live step display while the ViewModel is alive.
+    private void StartPositionPolling()
+    {
+        _pollCts = new CancellationTokenSource();
+        var token = _pollCts.Token;
+
+        Task.Run(async () =>
+        {
+            while (!token.IsCancellationRequested)
+            {
+                // refresh the live step label so the user can watch the counter change as they drive focus.
+                int pos = _cameraService.FocusStepPosition;
+                LiveStepLabel = IsPointASet ? $"Current: {pos:+0;-0;0} steps from A" : "Current: --";
+
+                // also refresh B label in case it was set externally (though commands handle this).
+                OnPropertyChanged(nameof(PointBLabel));
+                OnPropertyChanged(nameof(RangeLabel));
+
+                await Task.Delay(500, token);
+            }
+        }, token);
+    }
+
+    // stops the polling loop; call this when the ViewModel is no longer needed.
+    public void StopPositionPolling()
+    {
+        _pollCts?.Cancel();
+        _pollCts = null;
+    }
+
+    // --- Stack execution ---
 
     public async Task StartStack()
     {
@@ -93,7 +228,6 @@ public partial class FocusStackViewModel : ViewModelBase
                 if (i < NumberOfShots && !token.IsCancellationRequested)
                 {
                     // drive lens by step size
-                    // positive step size moves focus farther
                     for (int step = 0; step < StepSize; step++)
                     {
                         _cameraService.FocusFarFine();

@@ -7,99 +7,190 @@
              x:Class="CanonControl.Views.FocusStackView"
              x:DataType="vm:FocusStackViewModel">
 
-    <StackPanel Spacing="16" Margin="16">
-        <TextBlock Text="Focus Stacking"
-                   FontSize="20"
-                   FontWeight="Bold"
-                   Margin="0,0,0,8" />
+    <ScrollViewer>
+        <StackPanel Spacing="16" Margin="16">
+            <TextBlock Text="Focus Stacking"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Margin="0,0,0,8" />
 
-        <!-- Current Camera Settings (Read-only) -->
-        <Border Background="#F5F5F5" Padding="12" CornerRadius="4">
+            <!-- Current Camera Settings (Read-only) -->
+            <Border Background="#F5F5F5" Padding="12" CornerRadius="4">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Current Camera Settings" FontSize="14" FontWeight="Bold" />
+                    <TextBlock Text="{Binding ExposureSummary}"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               TextAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <!-- Focus Range (A to B) -->
+            <Border Background="#E8F4FD" Padding="12" CornerRadius="4" BorderBrush="#90CAF9" BorderThickness="1">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="Focus Range (A to B)"
+                               FontSize="16"
+                               FontWeight="Bold" />
+
+                    <!-- Helper text -->
+                    <TextBlock Text="Drive focus to near end, press Set A. Drive to far end, press Set B. Shot count is calculated automatically."
+                               FontSize="12"
+                               Foreground="#1565C0"
+                               TextWrapping="Wrap" />
+
+                    <!-- Set A / Set B buttons -->
+                    <Grid ColumnDefinitions="*,8,*,8,Auto">
+                        <Button Grid.Column="0"
+                                Content="Set A (Near)"
+                                Command="{Binding RegisterPointACommand}"
+                                IsEnabled="{Binding !IsRunning}"
+                                MinHeight="44"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Background="#1976D2"
+                                Foreground="White" />
+                        <Button Grid.Column="2"
+                                Content="Set B (Far)"
+                                Command="{Binding RegisterPointBCommand}"
+                                IsEnabled="{Binding IsPointASet}"
+                                MinHeight="44"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
+                                Background="#388E3C"
+                                Foreground="White" />
+                        <Button Grid.Column="4"
+                                Content="Clear"
+                                Command="{Binding ClearPointsCommand}"
+                                IsEnabled="{Binding !IsRunning}"
+                                MinHeight="44"
+                                MinWidth="60"
+                                Background="#757575"
+                                Foreground="White" />
+                    </Grid>
+
+                    <!-- A / B / Range labels -->
+                    <Grid ColumnDefinitions="*,*,*">
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding PointALabel}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1565C0"
+                                   TextAlignment="Center" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding PointBLabel}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="#2E7D32"
+                                   TextAlignment="Center" />
+                        <TextBlock Grid.Column="2"
+                                   Text="{Binding RangeLabel}"
+                                   FontSize="13"
+                                   Foreground="#424242"
+                                   TextAlignment="Center" />
+                    </Grid>
+
+                    <!-- Live step counter (shown while A is set so the user can watch the offset grow) -->
+                    <TextBlock Text="{Binding LiveStepLabel}"
+                               FontSize="12"
+                               Foreground="Gray"
+                               TextAlignment="Center"
+                               IsVisible="{Binding IsPointASet}" />
+                </StackPanel>
+            </Border>
+
+            <!-- Number of Shots -->
             <StackPanel Spacing="8">
-                <TextBlock Text="Current Camera Settings" FontSize="14" FontWeight="Bold" />
-                <TextBlock Text="{Binding ExposureSummary}"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           TextAlignment="Center" />
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="Number of Shots:" FontSize="16" VerticalAlignment="Center" />
+                    <TextBlock Text="(auto)"
+                               FontSize="14"
+                               Foreground="#1976D2"
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding IsRangeValid}" />
+                </StackPanel>
+                <NumericUpDown Value="{Binding NumberOfShots}"
+                               Minimum="1"
+                               Maximum="1000"
+                               Increment="1"
+                               MinHeight="44"
+                               IsEnabled="{Binding !IsRangeValid}" />
+                <TextBlock Text="Total number of images to capture"
+                           FontSize="12"
+                           Foreground="Gray"
+                           IsVisible="{Binding !IsRangeValid}" />
+                <TextBlock Text="Calculated from A/B range and step size"
+                           FontSize="12"
+                           Foreground="#1976D2"
+                           IsVisible="{Binding IsRangeValid}" />
             </StackPanel>
-        </Border>
 
-        <!-- Number of Shots -->
-        <StackPanel Spacing="8">
-            <TextBlock Text="Number of Shots:" FontSize="16" />
-            <NumericUpDown Value="{Binding NumberOfShots}"
-                           Minimum="1"
-                           Maximum="1000"
-                           Increment="1"
-                           MinHeight="44"
-                           IsEnabled="{Binding !IsRunning}" />
-            <TextBlock Text="Total number of images to capture"
-                       FontSize="12"
-                       Foreground="Gray" />
-        </StackPanel>
-
-        <!-- Step Size -->
-        <StackPanel Spacing="8">
-            <TextBlock Text="Step Size:" FontSize="16" />
-            <NumericUpDown Value="{Binding StepSize}"
-                           Minimum="1"
-                           Maximum="100"
-                           Increment="1"
-                           MinHeight="44"
-                           IsEnabled="{Binding !IsRunning}" />
-            <TextBlock Text="Focus steps to move between shots"
-                       FontSize="12"
-                       Foreground="Gray" />
-        </StackPanel>
-
-        <!-- Shoot Interval -->
-        <StackPanel Spacing="8">
-            <TextBlock Text="Shoot Interval (seconds):" FontSize="16" />
-            <NumericUpDown Value="{Binding ShootIntervalSeconds}"
-                           Minimum="0.5"
-                           Maximum="10"
-                           Increment="0.5"
-                           FormatString="0.0"
-                           MinHeight="44"
-                           IsEnabled="{Binding !IsRunning}" />
-            <TextBlock Text="Wait time between shots for stabilization"
-                       FontSize="12"
-                       Foreground="Gray" />
-        </StackPanel>
-
-        <!-- Status -->
-        <StackPanel Spacing="8">
-            <TextBlock Text="Status:" FontSize="16" />
-            <TextBlock Text="{Binding Status}"
-                       FontSize="14"
-                       Foreground="{Binding IsRunning, Converter={StaticResource BoolToColorConverter}}" />
-            <TextBlock Text="{Binding CurrentShot, StringFormat='Current Shot: {0}'}"
-                       FontSize="14"
-                       IsVisible="{Binding IsRunning}" />
-        </StackPanel>
-
-        <!-- Info -->
-        <Border Background="#F0F0F0"
-                Padding="12"
-                CornerRadius="4"
-                Margin="0,8,0,0">
-            <StackPanel Spacing="4">
-                <TextBlock Text="How it works:"
-                           FontWeight="Bold"
-                           FontSize="14" />
-                <TextBlock Text="• Takes multiple shots while moving focus"
+            <!-- Step Size -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Step Size:" FontSize="16" />
+                <NumericUpDown Value="{Binding StepSize}"
+                               Minimum="1"
+                               Maximum="100"
+                               Increment="1"
+                               MinHeight="44"
+                               IsEnabled="{Binding !IsRunning}" />
+                <TextBlock Text="Focus steps (Near1 pulses) to move between shots"
                            FontSize="12"
-                           TextWrapping="Wrap" />
-                <TextBlock Text="• Each shot focuses slightly farther than previous"
-                           FontSize="12"
-                           TextWrapping="Wrap" />
-                <TextBlock Text="• Combine images in software for extended depth of field"
-                           FontSize="12"
-                           TextWrapping="Wrap" />
-                <TextBlock Text="• Useful for macro and product photography"
-                           FontSize="12"
-                           TextWrapping="Wrap" />
+                           Foreground="Gray" />
             </StackPanel>
-        </Border>
-    </StackPanel>
+
+            <!-- Shoot Interval -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Shoot Interval (seconds):" FontSize="16" />
+                <NumericUpDown Value="{Binding ShootIntervalSeconds}"
+                               Minimum="0.5"
+                               Maximum="10"
+                               Increment="0.5"
+                               FormatString="0.0"
+                               MinHeight="44"
+                               IsEnabled="{Binding !IsRunning}" />
+                <TextBlock Text="Wait time between shots for stabilization"
+                           FontSize="12"
+                           Foreground="Gray" />
+            </StackPanel>
+
+            <!-- Status -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Status:" FontSize="16" />
+                <TextBlock Text="{Binding Status}"
+                           FontSize="14"
+                           TextWrapping="Wrap"
+                           Foreground="{Binding IsRunning, Converter={StaticResource BoolToColorConverter}}" />
+                <TextBlock Text="{Binding CurrentShot, StringFormat='Current Shot: {0}'}"
+                           FontSize="14"
+                           IsVisible="{Binding IsRunning}" />
+            </StackPanel>
+
+            <!-- Info -->
+            <Border Background="#F0F0F0"
+                    Padding="12"
+                    CornerRadius="4"
+                    Margin="0,8,0,0">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="How it works:"
+                               FontWeight="Bold"
+                               FontSize="14" />
+                    <TextBlock Text="• Drive focus to near end and press Set A to register the start point"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="• Drive focus to far end and press Set B — shot count is calculated automatically"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="• Each shot moves focus farther by the Step Size (Near1 pulses)"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="• Combine images in software (Helicon Focus, Zerene) for extended depth of field"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                    <TextBlock Text="• Useful for macro and product photography"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

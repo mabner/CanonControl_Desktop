@@ -32,6 +32,12 @@ public class CameraService
     public bool LiveViewDuringAutoFocus { get; set; } = true;
     public int FocusMediumSteps { get; set; } = 3;
     public int FocusCoarseSteps { get; set; } = 6;
+
+    // relative step counter: +1 per Far1 pulse, -1 per Near1 pulse; reset when point A is registered.
+    public int FocusStepPosition { get; private set; } = 0;
+
+    // resets the step counter to zero; called when the user registers focus point A.
+    public void ResetFocusStepPosition() { lock (_cameraLock) { FocusStepPosition = 0; } }
     public string SavePath
     {
         get => _sdk.SavePath;
@@ -360,6 +366,7 @@ public class CameraService
             try
             {
                 _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                FocusStepPosition--; // track relative position: near moves closer (negative direction).
                 Thread.Sleep(50);
             }
             finally
@@ -379,6 +386,7 @@ public class CameraService
                 for (int i = 0; i < FocusMediumSteps; i++)
                 {
                     _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                    FocusStepPosition--; // decrement once per Near1 pulse.
                     Thread.Sleep(50);
                 }
             }
@@ -400,6 +408,7 @@ public class CameraService
                 for (int i = 0; i < FocusCoarseSteps; i++)
                 {
                     _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                    FocusStepPosition--; // decrement once per Near1 pulse.
                     Thread.Sleep(50);
                 }
             }
@@ -425,6 +434,7 @@ public class CameraService
                     lock (_cameraLock)
                     {
                         _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                        FocusStepPosition--; // decrement on each continuous Near1 pulse.
                     }
 
                     await Task.Delay(80, token); // focus adjustment interval
@@ -443,6 +453,7 @@ public class CameraService
             try
             {
                 _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                FocusStepPosition++; // track relative position: far moves away (positive direction).
                 Thread.Sleep(50);
             }
             finally
@@ -462,6 +473,7 @@ public class CameraService
                 for (int i = 0; i < FocusMediumSteps; i++)
                 {
                     _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                    FocusStepPosition++; // increment once per Far1 pulse.
                     Thread.Sleep(50);
                 }
             }
@@ -482,6 +494,7 @@ public class CameraService
                 for (int i = 0; i < FocusCoarseSteps; i++)
                 {
                     _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                    FocusStepPosition++; // increment once per Far1 pulse.
                     Thread.Sleep(50);
                 }
             }
@@ -507,6 +520,7 @@ public class CameraService
                     lock (_cameraLock)
                     {
                         _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                        FocusStepPosition++; // increment on each continuous Far1 pulse.
                     }
 
                     await Task.Delay(80, token);
@@ -533,6 +547,7 @@ public class CameraService
                         lock (_cameraLock)
                         {
                             _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                            FocusStepPosition--; // decrement per Near1 pulse in continuous medium near.
                         }
                         await Task.Delay(50, token);
                     }
@@ -560,6 +575,7 @@ public class CameraService
                         lock (_cameraLock)
                         {
                             _sdk.DriveLensNear(EdsEvfDriveLens.Near1);
+                            FocusStepPosition--; // decrement per Near1 pulse in continuous coarse near.
                         }
                         await Task.Delay(50, token);
                     }
@@ -587,6 +603,7 @@ public class CameraService
                         lock (_cameraLock)
                         {
                             _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                            FocusStepPosition++; // increment per Far1 pulse in continuous medium far.
                         }
                         await Task.Delay(50, token);
                     }
@@ -614,6 +631,7 @@ public class CameraService
                         lock (_cameraLock)
                         {
                             _sdk.DriveLensFar(EdsEvfDriveLens.Far1);
+                            FocusStepPosition++; // increment per Far1 pulse in continuous coarse far.
                         }
                         await Task.Delay(50, token);
                     }
