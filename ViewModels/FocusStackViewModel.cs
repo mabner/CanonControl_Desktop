@@ -216,6 +216,24 @@ public partial class FocusStackViewModel : ViewModelBase
             // small delay to ensure UI is fully updated before starting
             await Task.Delay(100, token);
 
+            // Travel to point A before starting
+            if (IsPointASet && _cameraService.FocusStepPosition != FocusPointA!.Value)
+            {
+                Status = "Travelling to Point A...";
+                while (_cameraService.FocusStepPosition != FocusPointA.Value && !token.IsCancellationRequested)
+                {
+                    if (_cameraService.FocusStepPosition > FocusPointA.Value)
+                    {
+                        _cameraService.FocusNearFine();
+                    }
+                    else
+                    {
+                        _cameraService.FocusFarFine();
+                    }
+                    await Task.Delay(50, token); // Allow EVF update and prevent blocking
+                }
+            }
+
             for (int i = 1; i <= NumberOfShots && !token.IsCancellationRequested; i++)
             {
                 CurrentShot = i;
