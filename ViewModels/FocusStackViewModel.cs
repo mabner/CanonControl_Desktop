@@ -31,6 +31,8 @@ public partial class FocusStackViewModel : ViewModelBase
     private int _stepSize = 1;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(TravelToACommand))]
+    [NotifyCanExecuteChangedFor(nameof(TravelToBCommand))]
     private bool _isRunning;
 
     [ObservableProperty]
@@ -59,18 +61,22 @@ public partial class FocusStackViewModel : ViewModelBase
     // raw step counter value recorded when the user pressed Set A (always 0 after reset).
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsPointASet))]
+    [NotifyPropertyChangedFor(nameof(CanTravelToA))]
     [NotifyPropertyChangedFor(nameof(IsRangeValid))]
     [NotifyPropertyChangedFor(nameof(PointALabel))]
     [NotifyPropertyChangedFor(nameof(RangeLabel))]
     [NotifyCanExecuteChangedFor(nameof(RegisterPointBCommand))]
+    [NotifyCanExecuteChangedFor(nameof(TravelToACommand))]
     private int? _focusPointA;
 
     // raw step counter value recorded when the user pressed Set B.
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsPointBSet))]
+    [NotifyPropertyChangedFor(nameof(CanTravelToB))]
     [NotifyPropertyChangedFor(nameof(IsRangeValid))]
     [NotifyPropertyChangedFor(nameof(PointBLabel))]
     [NotifyPropertyChangedFor(nameof(RangeLabel))]
+    [NotifyCanExecuteChangedFor(nameof(TravelToBCommand))]
     private int? _focusPointB;
 
     // live display of the current focus step offset from point A (shown while user drives focus to B).
@@ -97,6 +103,10 @@ public partial class FocusStackViewModel : ViewModelBase
 
     // true when both points are set and B is strictly further than A.
     public bool IsRangeValid => FocusPointA.HasValue && FocusPointB.HasValue && FocusPointB.Value > FocusPointA.Value;
+
+    public bool CanTravelToA => IsPointASet && !IsRunning;
+    
+    public bool CanTravelToB => IsPointBSet && !IsRunning;
 
     // human-readable label for point A shown in the UI.
     public string PointALabel => FocusPointA.HasValue ? "A: 0 (near)" : "A: --";
@@ -145,6 +155,77 @@ public partial class FocusStackViewModel : ViewModelBase
         FocusPointB = null;
         LiveStepLabel = "Current: --";
         Status = "Range cleared. Set A and B to use automatic shot calculation.";
+    }
+
+    [RelayCommand(CanExecute = nameof(CanTravelToA))]
+    private async Task TravelToA()
+    {
+        if (IsRunning) return;
+        IsRunning = true;
+        _cancellationTokenSource = new CancellationTokenSource();
+        try
+        {
+            await TravelToStepInternalAsync(FocusPointA!.Value, _cancellationTokenSource.Token);
+            Status = "Arrived at Point A.";
+        }
+        catch (System.OperationCanceledException)
+        {
+            Status = "Travel stopped.";
+        }
+        catch (System.Exception ex)
+        {
+            Status = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsRunning = false;
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanTravelToB))]
+    private async Task TravelToB()
+    {
+        if (IsRunning) return;
+        IsRunning = true;
+        _cancellationTokenSource = new CancellationTokenSource();
+        try
+        {
+            await TravelToStepInternalAsync(FocusPointB!.Value, _cancellationTokenSource.Token);
+            Status = "Arrived at Point B.";
+        }
+        catch (System.OperationCanceledException)
+        {
+            Status = "Travel stopped.";
+        }
+        catch (System.Exception ex)
+        {
+            Status = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            IsRunning = false;
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+        }
+    }
+
+    private async Task TravelToStepInternalAsync(int targetStep, CancellationToken token)
+    {
+        Status = $"Travelling to {targetStep}...";
+        while (_cameraService.FocusStepPosition != targetStep && !token.IsCancellationRequested)
+        {
+            if (_cameraService.FocusStepPosition > targetStep)
+            {
+                _cameraService.FocusNearFine();
+            }
+            else
+            {
+                _cameraService.FocusFarFine();
+            }
+            await Task.Delay(50, token); // Allow EVF update and prevent blocking
+        }
     }
 
     // called automatically when StepSize changes so the shot count stays in sync.
@@ -219,19 +300,7 @@ public partial class FocusStackViewModel : ViewModelBase
             // Travel to point A before starting
             if (IsPointASet && _cameraService.FocusStepPosition != FocusPointA!.Value)
             {
-                Status = "Travelling to Point A...";
-                while (_cameraService.FocusStepPosition != FocusPointA.Value && !token.IsCancellationRequested)
-                {
-                    if (_cameraService.FocusStepPosition > FocusPointA.Value)
-                    {
-                        _cameraService.FocusNearFine();
-                    }
-                    else
-                    {
-                        _cameraService.FocusFarFine();
-                    }
-                    await Task.Delay(50, token); // Allow EVF update and prevent blocking
-                }
+                await TravelToStepInternalAsync(FocusPointA.Value, token);
             }
 
             for (int i = 1; i <= NumberOfShots && !token.IsCancellationRequested; i++)

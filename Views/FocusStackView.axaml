@@ -89,6 +89,22 @@
                                    TextAlignment="Center" />
                     </Grid>
 
+                    <!-- Travel to A / B buttons -->
+                    <Grid ColumnDefinitions="*,8,*,8,Auto" Margin="0,4,0,0">
+                        <Button Grid.Column="0"
+                                Content="Travel to A"
+                                Command="{Binding TravelToACommand}"
+                                MinHeight="32"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center" />
+                        <Button Grid.Column="2"
+                                Content="Travel to B"
+                                Command="{Binding TravelToBCommand}"
+                                MinHeight="32"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center" />
+                    </Grid>
+
                     <!-- Live step counter (shown while A is set so the user can watch the offset grow) -->
                     <TextBlock Text="{Binding LiveStepLabel}"
                                FontSize="12"
