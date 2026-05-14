@@ -149,57 +149,6 @@
                                                            TextWrapping="Wrap"
                                                            FontSize="14" />
                                         </Button>
-                                </StackPanel>
-
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <Button x:Name="FocusNearCoarseButton" MinWidth="60" MinHeight="50" Margin="4"
-                                                Command="{Binding FocusNearCoarseCommand}"
-                                                IsEnabled="{Binding IsLiveViewActive}">
-                                                <TextBlock Text="&lt;&lt;&lt;"
-                                                           TextAlignment="Center"
-                                                           TextWrapping="Wrap"
-                                                           FontSize="18" />
-                                        </Button>
-                                        <Button x:Name="FocusNearMediumButton" MinWidth="60" MinHeight="50" Margin="4"
-                                                Command="{Binding FocusNearMediumCommand}"
-                                                IsEnabled="{Binding IsLiveViewActive}">
-                                                <TextBlock Text="&lt;&lt;"
-                                                           TextAlignment="Center"
-                                                           TextWrapping="Wrap"
-                                                           FontSize="18" />
-                                        </Button>
-                                        <Button x:Name="FocusNearButton"
-                                                MinWidth="80" MinHeight="50" Margin="4"
-                                                IsEnabled="{Binding IsLiveViewActive}">
-                                                <TextBlock Text="&lt;"
-                                                           TextAlignment="Center"
-                                                           TextWrapping="Wrap"
-                                                           FontSize="24" />
-                                        </Button>
-                                        <Button x:Name="FocusFarButton"
-                                                MinWidth="80" MinHeight="50" Margin="4"
-                                                IsEnabled="{Binding IsLiveViewActive}">
-                                                <TextBlock Text=">"
-                                                           TextAlignment="Center"
-                                                           TextWrapping="Wrap"
-                                                           FontSize="24" />
-                                        </Button>
-                                        <Button x:Name="FocusFarMediumButton" MinWidth="60" MinHeight="50" Margin="4"
-                                                Command="{Binding FocusFarMediumCommand}"
-                                                IsEnabled="{Binding IsLiveViewActive}">
-                                                <TextBlock Text=">>"
-                                                           TextAlignment="Center"
-                                                           TextWrapping="Wrap"
-                                                           FontSize="18" />
-                                        </Button>
-                                        <Button x:Name="FocusFarCoarseButton" MinWidth="60" MinHeight="50" Margin="4"
-                                                Command="{Binding FocusFarCoarseCommand}"
-                                                IsEnabled="{Binding IsLiveViewActive}">
-                                                <TextBlock Text=">>>"
-                                                           TextAlignment="Center"
-                                                           TextWrapping="Wrap"
-                                                           FontSize="18" />
-                                        </Button>
                                         <Button x:Name="AutoFocusButton"
                                                 MinWidth="80" MinHeight="50" Margin="4"
                                                 IsEnabled="{Binding IsLiveViewActive}">
@@ -209,12 +158,63 @@
                                                            FontSize="14" />
                                         </Button>
                                 </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <Button x:Name="FocusNearCoarseButton" MinWidth="40" MinHeight="50" Margin="4"
+                                                Command="{Binding FocusNearCoarseCommand}"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text="&lt;&lt;&lt;"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="16" />
+                                        </Button>
+                                        <Button x:Name="FocusNearMediumButton" MinWidth="40" MinHeight="50" Margin="4"
+                                                Command="{Binding FocusNearMediumCommand}"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text="&lt;&lt;"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="16" />
+                                        </Button>
+                                        <Button x:Name="FocusNearButton"
+                                                MinWidth="50" MinHeight="50" Margin="4"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text="&lt;"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="20" />
+                                        </Button>
+                                        <Button x:Name="FocusFarButton"
+                                                MinWidth="50" MinHeight="50" Margin="4"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text=">"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="20" />
+                                        </Button>
+                                        <Button x:Name="FocusFarMediumButton" MinWidth="40" MinHeight="50" Margin="4"
+                                                Command="{Binding FocusFarMediumCommand}"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text=">>"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="16" />
+                                        </Button>
+                                        <Button x:Name="FocusFarCoarseButton" MinWidth="40" MinHeight="50" Margin="4"
+                                                Command="{Binding FocusFarCoarseCommand}"
+                                                IsEnabled="{Binding IsLiveViewActive}">
+                                                <TextBlock Text=">>>"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           FontSize="16" />
+                                        </Button>
+                                </StackPanel>
                         </StackPanel>
                 </StackPanel>
 
                 <!-- Side Panel (Row 1, Column 1) -->
                 <!-- ContentControl uses ViewLocator (from App.axaml.DataTemplates) to automatically resolve views for ViewModels -->
-                <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer Grid.Row="1" Grid.RowSpan="2" Grid.Column="1" VerticalScrollBarVisibility="Auto">
                         <ContentControl Content="{Binding CurrentSidePanelViewModel}" />
                 </ScrollViewer>
         </Grid>
