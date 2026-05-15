@@ -21,10 +21,14 @@ public class EDSDKWrapper
 {
     private IntPtr _camera;
     private EDSDK.EdsObjectEventHandler? _objectEventHandler;
+    private EDSDK.EdsCameraAddedHandler? _cameraAddedHandler;
+    private bool _isInitialized;
     private readonly object _downloadLock = new();
 
     // tracks how many transfer requests are still being processed.
     private int _pendingDownloads;
+
+    public event EventHandler? CameraAdded;
 
     public string? LastError { get; private set; }
     public bool LastConnectionAttemptFoundNoCamera { get; private set; }
@@ -36,11 +40,20 @@ public class EDSDKWrapper
 
     public bool Initialize()
     {
+        if (_isInitialized)
+            return true;
+
         var err = EDSDK.EdsInitializeSDK();
         if (err == EdsError.EDS_ERR_OK)
         {
+            _isInitialized = true;
             LastError = null;
             LastConnectionAttemptFoundNoCamera = false;
+
+            // register camera added handler
+            _cameraAddedHandler = new EDSDK.EdsCameraAddedHandler(OnCameraAdded);
+            EDSDK.EdsSetCameraAddedHandler(_cameraAddedHandler, IntPtr.Zero);
+
             return true;
         }
 
@@ -54,6 +67,9 @@ public class EDSDKWrapper
     {
         LastError = null;
         LastConnectionAttemptFoundNoCamera = false;
+
+        // some camera models require explicit event pumping to refresh the camera list
+        EDSDK.EdsGetEvent();
 
         // close any existing connection first
         if (_camera != IntPtr.Zero)
@@ -507,7 +523,21 @@ public class EDSDKWrapper
             _objectEventHandler = null; // clear the reference to allow GC
         }
 
+        if (_cameraAddedHandler != null)
+        {
+            EDSDK.EdsSetCameraAddedHandler(null, IntPtr.Zero);
+            _cameraAddedHandler = null;
+        }
+
         EDSDK.EdsTerminateSDK();
+        _isInitialized = false;
+    }
+
+    private uint OnCameraAdded(IntPtr inContext)
+    {
+        Console.WriteLine("[SDK] Camera added event received");
+        CameraAdded?.Invoke(this, EventArgs.Empty);
+        return (uint)EdsError.EDS_ERR_OK;
     }
 
     #endregion Initialization and Camera Management

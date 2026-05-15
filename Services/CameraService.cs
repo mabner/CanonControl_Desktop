@@ -24,6 +24,22 @@ public class CameraService
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _focusCts;
     private Task? _liveViewTask;
+
+    public CameraService()
+    {
+        try
+        {
+            NativeLibraryLoader.LoadEDSDK();
+            _sdk.Initialize();
+            _sdk.CameraAdded += (s, e) => CameraAdded?.Invoke(this, EventArgs.Empty);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CameraService] Initial load failed: {ex.Message}");
+        }
+    }
+
+    public event EventHandler? CameraAdded;
     private volatile bool _isEvfDownloadPaused = false;
     public string? LastConnectionError { get; private set; }
     public bool LastConnectionAttemptFoundNoCamera { get; private set; }
@@ -69,17 +85,6 @@ public class CameraService
     {
         LastConnectionError = null;
         LastConnectionAttemptFoundNoCamera = false;
-
-        try
-        {
-            NativeLibraryLoader.LoadEDSDK();
-        }
-        catch (Exception ex)
-        {
-            LastConnectionError = $"Failed to load native Canon SDK library: {ex.Message}";
-            Console.WriteLine($"[Connect] {LastConnectionError}");
-            return false;
-        }
 
         if (!_sdk.Initialize())
         {

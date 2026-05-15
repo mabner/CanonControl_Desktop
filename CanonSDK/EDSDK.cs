@@ -43,6 +43,9 @@ public static class EDSDK
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate uint EdsStateEventHandler(uint inEvent, uint inParam, IntPtr inContext);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    public delegate uint EdsCameraAddedHandler(IntPtr inContext);
+
     #endregion Event Handler Delegates
 
     # region Initialization and Camera Management
@@ -104,6 +107,12 @@ public static class EDSDK
         IntPtr camera,
         uint inEvent,
         EdsStateEventHandler inStateEventHandler,
+        IntPtr inContext
+    );
+
+    [DllImport(DLL)]
+    public static extern EdsError EdsSetCameraAddedHandler(
+        EdsCameraAddedHandler inCameraAddedHandler,
         IntPtr inContext
     );
 

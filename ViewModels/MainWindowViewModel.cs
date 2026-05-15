@@ -1,4 +1,4 @@
-﻿/*
+/*
 * CanonControl
 * Copyright (c) [2026] [Marcos Leite]
 *
@@ -49,6 +49,24 @@ public partial class MainWindowViewModel : ViewModelBase
 
         // load and apply settings
         LoadSettings();
+
+        _cameraService.CameraAdded += OnCameraAdded;
+    }
+
+    private void OnCameraAdded(object? sender, EventArgs e)
+    {
+        // Must invoke on UI thread
+        Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+        {
+            if (!IsCameraConnected)
+            {
+                System.Diagnostics.Debug.WriteLine("Camera added event detected - attempting to connect...");
+                if (ConnectCameraCommand.CanExecute(null))
+                {
+                    await ConnectCameraCommand.ExecuteAsync(null);
+                }
+            }
+        });
     }
 
     [ObservableProperty]
