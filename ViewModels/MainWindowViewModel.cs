@@ -94,7 +94,6 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanConnect))]
     [NotifyPropertyChangedFor(nameof(CanDisconnect))]
-    [NotifyPropertyChangedFor(nameof(IsMirrorLockUpSupported))]
     [NotifyCanExecuteChangedFor(nameof(ToggleLiveViewCommand))]
     [NotifyCanExecuteChangedFor(nameof(ContextCaptureCommand))]
     private bool _isCameraConnected;
@@ -147,17 +146,10 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool _isLiveViewActive;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsMirrorLockUpSupported))]
-    [NotifyCanExecuteChangedFor(nameof(ToggleMirrorLockUpCommand))]
-    private bool _mirrorLockUpSupported;
 
     [ObservableProperty]
-    private bool _isMirrorLockUpEnabled;
 
     [ObservableProperty]
-    private string _mirrorLockUpButtonText = "MLU Off";
-
-    public bool IsMirrorLockUpSupported => IsCameraConnected && MirrorLockUpSupported;
 
     // settings
     private int _liveViewFrameRate = 30;
@@ -200,19 +192,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 // start battery monitoring for the connected camera
                 StartBatteryPolling();
-
-                // enable and probe mirror lock up support
-                MirrorLockUpSupported = _cameraService.EnableMirrorLockUpProperties();
-                if (_cameraService.TryGetMirrorLockUpSetting(out var mirrorUpEnabled))
-                {
-                    IsMirrorLockUpEnabled = mirrorUpEnabled;
-                    MirrorLockUpButtonText = mirrorUpEnabled ? "MLU On" : "MLU Off";
-                }
-                else
-                {
-                    IsMirrorLockUpEnabled = false;
-                    MirrorLockUpButtonText = "MLU Off";
-                }
 
                 // navigate to Remote Capture panel by default after connection
                 NavigateToRemoteCapture();
@@ -808,19 +787,11 @@ public partial class MainWindowViewModel : ViewModelBase
         _cameraService.StopAutoFocus();
     }
 
-    [RelayCommand(CanExecute = nameof(IsMirrorLockUpSupported))]
-    private void ToggleMirrorLockUp()
     {
-        bool newState = !IsMirrorLockUpEnabled;
-        if (_cameraService.SetMirrorLockUpSetting(newState))
         {
-            IsMirrorLockUpEnabled = newState;
-            MirrorLockUpButtonText = newState ? "MLU On" : "MLU Off";
         }
         else
         {
-            // If setting failed, show a message
-            Status = "Mirror lock up not supported by this camera model";
         }
     }
 
