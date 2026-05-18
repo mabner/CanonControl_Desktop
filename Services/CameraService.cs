@@ -19,11 +19,14 @@ namespace CanonControl.Services;
 
 public class CameraService
 {
+    public event EventHandler<bool>? AutoFocusActiveChanged;
     private readonly EDSDKWrapper _sdk = new();
     private readonly object _cameraLock = new();
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _focusCts;
     private Task? _liveViewTask;
+    private volatile int _lastEvfFrameWidth = 0;
+    private volatile int _lastEvfFrameHeight = 0;
 
     public CameraService()
     {
@@ -53,7 +56,14 @@ public class CameraService
     public int FocusStepPosition { get; private set; } = 0;
 
     // resets the step counter to zero; called when the user registers focus point A.
-    public void ResetFocusStepPosition() { lock (_cameraLock) { FocusStepPosition = 0; } }
+    public void ResetFocusStepPosition()
+    {
+        lock (_cameraLock)
+        {
+            FocusStepPosition = 0;
+        }
+    }
+
     public string SavePath
     {
         get => _sdk.SavePath;
@@ -242,7 +252,21 @@ public class CameraService
                         }
 
                         if (frame != null)
+                        {
+                            // update last frame size for accurate click-to-AF mapping
+                            try
+                            {
+                                (int w, int h) = GetJpegSize(frame);
+                                if (w > 0 && h > 0)
+                                {
+                                    _lastEvfFrameWidth = w;
+                                    _lastEvfFrameHeight = h;
+                                }
+                            }
+                            catch { }
+
                             onFrame(frame);
+                        }
 
                         await Task.Delay(delayMs, token);
                     }
@@ -584,11 +608,23 @@ public class CameraService
     public void StartAutoFocus()
     {
         SetEvfAutoFocus(true);
+        // notify listeners that autofocus is active
+        try
+        {
+            AutoFocusActiveChanged?.Invoke(this, true);
+        }
+        catch { }
     }
 
     public void StopAutoFocus()
     {
         SetEvfAutoFocus(false);
+        // notify listeners that autofocus stopped (focus may be locked)
+        try
+        {
+            AutoFocusActiveChanged?.Invoke(this, false);
+        }
+        catch { }
     }
 
     public void SetEvfAutoFocus(bool enabled)
@@ -672,6 +708,177 @@ public class CameraService
         }
     }
 
+    // Positions the camera's AF frame to the clicked point and triggers a brief AF cycle.
+    // Requires Live AF mode (FlexiZone); switches temporarily if camera is in Quick mode.
+    public void ClickAfAtPoint(double xNormalized, double yNormalized)
+    {
+        // clamp inputs to valid normalised range
+        xNormalized = Math.Max(0.0, Math.Min(1.0, xNormalized));
+        yNormalized = Math.Max(0.0, Math.Min(1.0, yNormalized));
+
+        // run off the UI thread to avoid blocking the live-view loop
+        Task.Run(() =>
+        {
+            lock (_cameraLock)
+            {
+                _isEvfDownloadPaused = true;
+            }
+
+            uint originalAfMode = EdsEvfAfMode.Quick;
+            bool didSwitchAfMode = false;
+
+            try
+            {
+                // read current Evf_AFMode; SetFramePoint only moves the AF area in Live mode
+                lock (_cameraLock)
+                {
+                    _sdk.TryGetPropertyValue(EdsPropertyID.PropID_Evf_AFMode, out originalAfMode);
+                }
+
+                if (originalAfMode == EdsEvfAfMode.Quick)
+                {
+                    // must stop any active DoEvfAf before changing mode (Canon sample requirement)
+                    SetEvfAutoFocus(false);
+                    Thread.Sleep(100);
+
+                    lock (_cameraLock)
+                    {
+                        // switch to Live (FlexiZone) so SetFramePoint affects AF detection
+                        _sdk.SetProperty(EdsPropertyID.PropID_Evf_AFMode, EdsEvfAfMode.Live);
+                        didSwitchAfMode = true;
+                        Console.WriteLine("[ClickAfAtPoint] Switched to Live AF mode for click-to-focus.");
+                    }
+
+                    Thread.Sleep(150); // allow camera to switch modes
+                }
+
+                // read the camera's coordinate system from the current EVF frame
+                EdsSize coordSystem;
+                bool hasCoordsystem;
+
+                lock (_cameraLock)
+                {
+                    hasCoordsystem = _sdk.TryGetEvfCoordinateSystem(out coordSystem);
+                }
+
+                if (hasCoordsystem && coordSystem.width > 0 && coordSystem.height > 0)
+                {
+                    // map normalised click to camera coordinate space (JPEG-Large pixel coords)
+                    var framePoint = new EdsSize
+                    {
+                        width  = (int)Math.Round(xNormalized * coordSystem.width),
+                        height = (int)Math.Round(yNormalized * coordSystem.height),
+                    };
+
+                    // clamp to valid range
+                    framePoint.width  = Math.Max(0, Math.Min(coordSystem.width  - 1, framePoint.width));
+                    framePoint.height = Math.Max(0, Math.Min(coordSystem.height - 1, framePoint.height));
+
+                    lock (_cameraLock)
+                    {
+                        // positions AF frame; lockAfFrame=true holds position until DoEvfAf fires
+                        var err = _sdk.SetFramePoint(framePoint, lockAfFrame: true);
+                        Console.WriteLine($"[ClickAfAtPoint] SetFramePoint({framePoint.width},{framePoint.height}) in {coordSystem.width}x{coordSystem.height} → {err}");
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[ClickAfAtPoint] Could not read Evf_CoordinateSystem — AF will fire at current camera AF point.");
+                }
+
+                // trigger AF cycle at the new frame position
+                SetEvfAutoFocus(true);
+                Thread.Sleep(700);
+                SetEvfAutoFocus(false);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ClickAfAtPoint] Error: {ex.Message}");
+            }
+            finally
+            {
+                // restore original AF mode if we changed it
+                if (didSwitchAfMode)
+                {
+                    lock (_cameraLock)
+                    {
+                        _sdk.SetProperty(EdsPropertyID.PropID_Evf_AFMode, originalAfMode);
+                        Console.WriteLine($"[ClickAfAtPoint] Restored AF mode to {originalAfMode}.");
+                    }
+                }
+
+                lock (_cameraLock)
+                {
+                    _isEvfDownloadPaused = false;
+                }
+            }
+        });
+    }
+
+    // expose last EVF frame size for diagnostics
+    public (int width, int height) GetLastEvfFrameSize() =>
+        (_lastEvfFrameWidth, _lastEvfFrameHeight);
+
+    // minimal JPEG SOF parser to extract width/height
+    private static (int width, int height) GetJpegSize(byte[] jpeg)
+    {
+        if (jpeg == null || jpeg.Length < 4)
+            return (0, 0);
+
+        int i = 0;
+        // check SOI
+        if (jpeg[0] != 0xFF || jpeg[1] != 0xD8)
+            return (0, 0);
+
+        i = 2;
+        while (i + 3 < jpeg.Length)
+        {
+            if (jpeg[i] != 0xFF)
+            {
+                i++;
+                continue;
+            }
+            int marker = jpeg[i + 1] & 0xFF;
+            // SOF0/1/2/3/5/6/7/9/10/11/13/14/15
+            if (
+                marker == 0xC0
+                || marker == 0xC1
+                || marker == 0xC2
+                || marker == 0xC3
+                || marker == 0xC5
+                || marker == 0xC6
+                || marker == 0xC7
+                || marker == 0xC9
+                || marker == 0xCA
+                || marker == 0xCB
+                || marker == 0xCD
+                || marker == 0xCE
+                || marker == 0xCF
+            )
+            {
+                if (i + 7 >= jpeg.Length)
+                    return (0, 0);
+                // length = next two bytes
+                int blockLength = (jpeg[i + 2] << 8) | jpeg[i + 3];
+                // precision = jpeg[i+4]
+                int height = (jpeg[i + 5] << 8) | jpeg[i + 6];
+                int width = (jpeg[i + 7] << 8) | jpeg[i + 8];
+                return (width, height);
+            }
+            else
+            {
+                if (i + 3 >= jpeg.Length)
+                    return (0, 0);
+                int blockLength = (jpeg[i + 2] << 8) | jpeg[i + 3];
+                if (blockLength < 2)
+                    return (0, 0);
+                i += 2 + blockLength;
+            }
+        }
+
+        return (0, 0);
+    }
+
     #endregion Focus Control
 
     #region Camera Settings
@@ -716,7 +923,12 @@ public class CameraService
     {
         lock (_cameraLock)
         {
-            if (_sdk.GetAvailablePropertyValues(EdsPropertyID.PropID_ImageQuality, out uint[] available))
+            if (
+                _sdk.GetAvailablePropertyValues(
+                    EdsPropertyID.PropID_ImageQuality,
+                    out uint[] available
+                )
+            )
             {
                 Console.WriteLine("[ImageFormat] Available values:");
                 foreach (var val in available)

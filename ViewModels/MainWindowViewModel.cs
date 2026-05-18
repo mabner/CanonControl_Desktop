@@ -51,6 +51,11 @@ public partial class MainWindowViewModel : ViewModelBase
         LoadSettings();
 
         _cameraService.CameraAdded += OnCameraAdded;
+        _cameraService.AutoFocusActiveChanged += (s, active) =>
+        {
+            // when autofocus is active, we consider focus not locked; when it stops, treat as locked briefly
+            FocusLocked = !active;
+        };
     }
 
     private void OnCameraAdded(object? sender, EventArgs e)
@@ -60,7 +65,9 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             if (!IsCameraConnected)
             {
-                System.Diagnostics.Debug.WriteLine("Camera added event detected - attempting to connect...");
+                System.Diagnostics.Debug.WriteLine(
+                    "Camera added event detected - attempting to connect..."
+                );
                 if (ConnectCameraCommand.CanExecute(null))
                 {
                     await ConnectCameraCommand.ExecuteAsync(null);
@@ -141,15 +148,40 @@ public partial class MainWindowViewModel : ViewModelBase
         nameof(StartFocusFarCommand),
         nameof(StopFocusCommand),
         nameof(StartAutoFocusCommand),
-        nameof(StopAutoFocusCommand)
+        nameof(StopAutoFocusCommand),
+        nameof(MoveFocusUpCommand),
+        nameof(MoveFocusDownCommand),
+        nameof(MoveFocusLeftCommand),
+        nameof(MoveFocusRightCommand)
     )]
     private bool _isLiveViewActive;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(
+        nameof(MoveFocusUpCommand),
+        nameof(MoveFocusDownCommand),
+        nameof(MoveFocusLeftCommand),
+        nameof(MoveFocusRightCommand)
+    )]
+    private bool _focusLocked;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(
+        nameof(MoveFocusUpCommand),
+        nameof(MoveFocusDownCommand),
+        nameof(MoveFocusLeftCommand),
+        nameof(MoveFocusRightCommand)
+    )]
+    private double _focusPointX = 0.5;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(
+        nameof(MoveFocusUpCommand),
+        nameof(MoveFocusDownCommand),
+        nameof(MoveFocusLeftCommand),
+        nameof(MoveFocusRightCommand)
+    )]
+    private double _focusPointY = 0.5;
 
     // settings
     private int _liveViewFrameRate = 30;
@@ -787,11 +819,40 @@ public partial class MainWindowViewModel : ViewModelBase
         _cameraService.StopAutoFocus();
     }
 
+    private bool CanMoveFocus() =>
+        IsLiveViewActive && CurrentContext == NavigationContext.RemoteCapture;
+
+    [RelayCommand(CanExecute = nameof(CanMoveFocus))]
+    private void MoveFocusUp()
     {
+        FocusPointY = Math.Max(0.0, FocusPointY - 0.05);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanMoveFocus))]
+    private void MoveFocusDown()
+    {
+        FocusPointY = Math.Min(1.0, FocusPointY + 0.05);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanMoveFocus))]
+    private void MoveFocusLeft()
+    {
+        FocusPointX = Math.Max(0.0, FocusPointX - 0.05);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanMoveFocus))]
+    private void MoveFocusRight()
+    {
+        FocusPointX = Math.Min(1.0, FocusPointX + 0.05);
+    }
+
+    public void SetFocusPoint(double xNormalized, double yNormalized)
+    {
+        if (CanMoveFocus())
         {
-        }
-        else
-        {
+            FocusPointX = xNormalized;
+            FocusPointY = yNormalized;
+            _cameraService.ClickAfAtPoint(xNormalized, yNormalized);
         }
     }
 

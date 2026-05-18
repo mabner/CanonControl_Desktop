@@ -172,6 +172,15 @@ public static class EDSDK
     ); // overload for passing value directly
 
     [DllImport(DLL)]
+    public static extern EdsError EdsSetPropertyData(
+        IntPtr camera,
+        uint propertyID,
+        int param,
+        int size,
+        ref EdsPoint data
+    ); // overload for passing EdsPoint directly
+
+    [DllImport(DLL)]
     public static extern EdsError EdsGetPropertyData(
         IntPtr camera,
         uint propertyID,
@@ -187,6 +196,16 @@ public static class EDSDK
         int param,
         int size,
         [Out] uint[] data
+    );
+
+    // overload for reading EdsSize structs (e.g. Evf_CoordinateSystem)
+    [DllImport(DLL)]
+    public static extern EdsError EdsGetPropertyData(
+        IntPtr evfImageRef,
+        uint propertyID,
+        int param,
+        int size,
+        out EdsSize data
     );
 
     [DllImport(DLL)]
@@ -218,6 +237,12 @@ public static class EDSDK
 
     [DllImport(DLL)]
     public static extern EdsError EdsSendCommand(IntPtr camera, uint command, int param);
+
+    // Specifies the camera's AF and zoom frame position during Live View.
+    // inFramePoint uses EdsSize.width/height in Evf_CoordinateSystem coordinates.
+    // inLockAfFrame = true locks the frame until AF-related camera operation executes.
+    [DllImport(DLL)]
+    public static extern EdsError EdsSetFramePoint(IntPtr inCameraRef, EdsSize inFramePoint, bool inLockAfFrame);
 
     #endregion Focus Control
 

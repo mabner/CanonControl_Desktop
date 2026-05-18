@@ -147,6 +147,69 @@ public partial class MainWindow : Window
             RoutingStrategies.Tunnel | RoutingStrategies.Bubble,
             true
         );
+
+        // subscribe to DataContext changes to update focus overlay
+        this.DataContextChanged += (_, __) => SubscribeVmPropertyChanges();
+        SubscribeVmPropertyChanges();
+    }
+
+    private void SubscribeVmPropertyChanges()
+    {
+        if (DataContext is MainWindowViewModel vm)
+        {
+            vm.PropertyChanged -= Vm_PropertyChanged;
+            vm.PropertyChanged += Vm_PropertyChanged;
+            UpdateFocusRect(vm);
+        }
+    }
+
+    private void Vm_PropertyChanged(
+        object? sender,
+        System.ComponentModel.PropertyChangedEventArgs e
+    )
+    {
+        if (sender is MainWindowViewModel vm)
+        {
+            if (
+                e.PropertyName == nameof(vm.FocusPointX)
+                || e.PropertyName == nameof(vm.FocusPointY)
+                || e.PropertyName == nameof(vm.FocusLocked)
+                || e.PropertyName == nameof(vm.LiveViewSurfaceWidth)
+                || e.PropertyName == nameof(vm.LiveViewSurfaceHeight)
+            )
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => UpdateFocusRect(vm));
+            }
+        }
+    }
+
+    private void UpdateFocusRect(MainWindowViewModel vm)
+    {
+        try
+        {
+            if (FocusRect == null || FocusOverlayCanvas == null)
+                return;
+
+            double canvasWidth = vm.LiveViewSurfaceWidth;
+            double canvasHeight = vm.LiveViewSurfaceHeight;
+
+            double rectW = FocusRect.Width;
+            double rectH = FocusRect.Height;
+
+            double left = vm.FocusPointX * canvasWidth - rectW / 2.0;
+            double top = vm.FocusPointY * canvasHeight - rectH / 2.0;
+
+            Canvas.SetLeft(FocusRect, Math.Max(0, left));
+            Canvas.SetTop(FocusRect, Math.Max(0, top));
+
+            FocusRect.Stroke = vm.FocusLocked
+                ? Avalonia.Media.Brushes.LimeGreen
+                : Avalonia.Media.Brushes.White;
+        }
+        catch
+        {
+            // ignore drawing errors
+        }
     }
 
     private void OnFocusNearPressed(object? sender, PointerPressedEventArgs e)
@@ -206,6 +269,21 @@ public partial class MainWindow : Window
         if (command.CanExecute(null))
         {
             command.Execute(null);
+        }
+    }
+
+    private void OnLiveViewPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm && vm.IsLiveViewActive)
+        {
+            var grid = sender as Grid;
+            if (grid == null) return;
+
+            var point = e.GetPosition(grid);
+            double xNormalized = point.X / grid.Bounds.Width;
+            double yNormalized = point.Y / grid.Bounds.Height;
+
+            vm.SetFocusPoint(xNormalized, yNormalized);
         }
     }
 }

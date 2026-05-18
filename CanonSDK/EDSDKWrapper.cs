@@ -700,6 +700,57 @@ public class EDSDKWrapper
         PressShutterButton(EdsShutterButton.Off);
     }
 
+    // Positions the camera's AF and zoom frame during Live View.
+    // inFramePoint coordinates must be in Evf_CoordinateSystem space (use TryGetEvfCoordinateSystem).
+    // inLockAfFrame = true locks the frame position until the next AF operation.
+    public EdsError SetFramePoint(EdsSize framePoint, bool lockAfFrame)
+    {
+        if (_camera == IntPtr.Zero)
+            return EdsError.EDS_ERR_OK;
+
+        return EDSDK.EdsSetFramePoint(_camera, framePoint, lockAfFrame);
+    }
+
+    // Reads the EVF coordinate system dimensions from a fresh EVF frame download.
+    // The camera reports this as the JPEG-Large size (e.g. 5184×3456).
+    // All Evf_ZoomPosition and EdsSetFramePoint coordinates must be expressed in this space.
+    public bool TryGetEvfCoordinateSystem(out EdsSize coordinateSystem)
+    {
+        coordinateSystem = default;
+
+        if (_camera == IntPtr.Zero)
+            return false;
+
+        IntPtr stream = IntPtr.Zero;
+        IntPtr evfImage = IntPtr.Zero;
+
+        try
+        {
+            EDSDK.EdsCreateMemoryStream(0, out stream);
+            EDSDK.EdsCreateEvfImageRef(stream, out evfImage);
+
+            var err = EDSDK.EdsDownloadEvfImage(_camera, evfImage);
+            if (err != EdsError.EDS_ERR_OK)
+                return false;
+
+            // reads coordinate system size from the EVF frame metadata
+            err = EDSDK.EdsGetPropertyData(
+                evfImage,
+                EdsPropertyID.Evf_CoordinateSystem,
+                0,
+                Marshal.SizeOf(typeof(EdsSize)),
+                out coordinateSystem
+            );
+
+            return err == EdsError.EDS_ERR_OK && coordinateSystem.width > 0 && coordinateSystem.height > 0;
+        }
+        finally
+        {
+            if (evfImage != IntPtr.Zero) EDSDK.EdsRelease(evfImage);
+            if (stream != IntPtr.Zero) EDSDK.EdsRelease(stream);
+        }
+    }
+
     #endregion Focus Control
 
     #region Camera Settings
@@ -972,6 +1023,59 @@ public class EDSDKWrapper
         }
 
         values = Array.Empty<uint>();
+        return false;
+    }
+
+    public bool SetEvfZoomPosition(EdsPoint point)
+    {
+        if (_camera == IntPtr.Zero)
+            return false;
+
+        var err = EDSDK.EdsSetPropertyData(_camera, EdsPropertyID.Evf_ZoomPosition, 0, Marshal.SizeOf(typeof(EdsPoint)), ref point);
+        return err == EdsError.EDS_ERR_OK;
+    }
+
+    // Attempts to set an EVF ClickPoint property on the camera.
+    // Tries a small range of likely EVF property IDs and returns true on first success.
+    public bool SetEvfClickPoint(int clickPoint)
+    {
+        if (_camera == IntPtr.Zero)
+            return false;
+
+        uint value = (uint)clickPoint;
+
+        // Candidate property IDs in EVF range; tries them until one succeeds.
+        var candidates = new uint[]
+        {
+            // common EVF property area (guessed candidates)
+            0x00000510u,
+            0x00000511u,
+            0x00000512u,
+            0x00000513u,
+            0x00000514u,
+            0x00000515u,
+            0x00000516u,
+            0x00000517u,
+            0x00000518u,
+            0x00000519u,
+            0x0000051Au,
+            0x0000051Bu,
+            0x0000051Cu,
+            0x0000051Du,
+            0x0000051Eu,
+            0x0000051Fu,
+            0x00000520u,
+        };
+
+        foreach (var propId in candidates)
+        {
+            var err = EDSDK.EdsSetPropertyData(_camera, propId, 0, sizeof(uint), ref value);
+            if (err == EdsError.EDS_ERR_OK)
+            {
+                return true;
+            }
+        }
+
         return false;
     }
 

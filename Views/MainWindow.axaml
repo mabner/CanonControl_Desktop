@@ -97,7 +97,7 @@
 
                 <!-- Live View Area (Row 1, Column 0) -->
                 <Viewbox Grid.Row="1" Grid.Column="0" Stretch="Uniform">
-                        <Grid Width="{Binding LiveViewSurfaceWidth}" Height="{Binding LiveViewSurfaceHeight}" Background="Black">
+                        <Grid Width="{Binding LiveViewSurfaceWidth}" Height="{Binding LiveViewSurfaceHeight}" Background="Black" PointerPressed="OnLiveViewPointerPressed">
                                 <Image Source="{Binding LiveImage}"
                                        Stretch="UniformToFill"
                                        RenderOptions.BitmapInterpolationMode="LowQuality" />
@@ -118,6 +118,11 @@
                                                         VerticalAlignment="Top"
                                                         Margin="8"
                                                         IsVisible="{Binding HistogramDisplayMode, Converter={StaticResource EnumNotEqualConverter}, ConverterParameter=None}" />
+
+                                <!-- Focus point overlay -->
+                                <Canvas x:Name="FocusOverlayCanvas" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                        <Rectangle x:Name="FocusRect" Width="80" Height="80" Fill="Transparent" Stroke="White" StrokeThickness="2"/>
+                                </Canvas>
                         </Grid>
                 </Viewbox>
 
@@ -125,7 +130,7 @@
                 <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Vertical" Margin="4" Spacing="4">
                         <StackPanel Orientation="Vertical" Margin="4" Spacing="4">
                                 <StackPanel Orientation="Horizontal" Spacing="4">
-                                        <Button MinWidth="90" MinHeight="50" Margin="4"
+                                        <Button MinWidth="60" MinHeight="50" Margin="4"
                                                 Command="{Binding ToggleLiveViewCommand}"
                                                 IsEnabled="{Binding IsCameraConnected}">
                                                 <TextBlock Text="Live&#x0a;View"
@@ -133,7 +138,30 @@
                                                            TextWrapping="Wrap"
                                                            FontSize="14" />
                                         </Button>
-                                        <Button MinWidth="90" MinHeight="50" Margin="4"
+                                        <!-- Directional focus point controls (small) -->
+                                        <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                <Button Content="U"
+                                                        Command="{Binding MoveFocusUpCommand}"
+                                                        MinWidth="30" MinHeight="30"
+                                                        Margin="2"
+                                                        IsEnabled="{Binding IsLiveViewActive}" />
+                                                <Button Content="L"
+                                                        Command="{Binding MoveFocusLeftCommand}"
+                                                        MinWidth="30" MinHeight="30"
+                                                        Margin="2"
+                                                        IsEnabled="{Binding IsLiveViewActive}" />
+                                                <Button Content="R"
+                                                        Command="{Binding MoveFocusRightCommand}"
+                                                        MinWidth="30" MinHeight="30"
+                                                        Margin="2"
+                                                        IsEnabled="{Binding IsLiveViewActive}" />
+                                                <Button Content="D"
+                                                        Command="{Binding MoveFocusDownCommand}"
+                                                        MinWidth="30" MinHeight="30"
+                                                        Margin="2"
+                                                        IsEnabled="{Binding IsLiveViewActive}" />
+                                        </StackPanel>
+                                        <Button MinWidth="60" MinHeight="50" Margin="4"
                                                 Command="{Binding ContextCaptureCommand}"
                                                 IsEnabled="{Binding IsCameraConnected}">
                                                 <TextBlock Text="{Binding ContextCaptureLabel}"

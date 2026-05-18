@@ -70,12 +70,28 @@ public struct EdsPropertyDesc
     public int[] PropDesc;
 }
 
+[StructLayout(LayoutKind.Sequential)]
+public struct EdsPoint
+{
+    public int x;
+    public int y;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct EdsSize
+{
+    public int width;
+    public int height;
+}
+
 #region Live View
 
 public static class EdsPropertyID
 {
     public const uint Evf_OutputDevice = 0x00000500;
     public const uint Evf_Mode = 0x00000501;
+    public const uint Evf_ZoomPosition = 0x00000508;
+    public const uint Evf_CoordinateSystem = 0x00000540;
 
     // camera settings properties
     public const uint PropID_ISOSpeed = 0x00000402;
@@ -87,6 +103,9 @@ public static class EdsPropertyID
     public const uint PropID_CurrentFolder = 0x00000010; // current folder on camera
     public const uint PropID_StillFolderName = 0x0000011E; // folder name for still images
     public const uint PropID_EnableProperty = 0x01000000; // special property for enabling property access
+
+    // EVF autofocus mode: Quick(0)=phase-detect uses hardware points; Live(1)=FlexiZone freely positionable
+    public const uint PropID_Evf_AFMode = 0x0000050E;
 
     // histogram properties (from EdsEvfImageRef)
     public const uint Evf_HistogramY = 0x00000515;
@@ -149,6 +168,14 @@ public static class EdsEvfHistogramStatus
     public const int Hide = 0;
     public const int Normal = 1;
     public const int Grayout = 2;
+}
+
+public static class EdsEvfAfMode
+{
+    public const uint Quick     = 0; // phase-detect, fixed hardware AF points; SetFramePoint has no AF effect
+    public const uint Live      = 1; // FlexiZone contrast-detect; SetFramePoint moves the AF area
+    public const uint LiveFace  = 2; // face-detection live AF
+    public const uint LiveMulti = 3; // multi-zone live AF (not all models)
 }
 
 #endregion Focus Control
