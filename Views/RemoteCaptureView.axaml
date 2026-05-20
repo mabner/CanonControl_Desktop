@@ -12,16 +12,18 @@
         <StackPanel Spacing="16" Margin="16">
 
                 <!-- Camera Settings Display -->
-                <TextBlock Text="Camera Settings" FontSize="18" FontWeight="Bold" />
-                <TextBlock Text="{Binding ExposureSummary}"
-                           FontSize="16"
-                           FontWeight="SemiBold"
-                           Margin="0,4,0,12"
-                           TextAlignment="Center" />
+                <TextBlock Text="Camera Settings" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center"/>
+                <StackPanel Spacing="8">
+                        <TextBlock Text="{Binding ExposureSummary}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Margin="0,4,0,12"
+                                   TextAlignment="Center" />
+                </StackPanel>
                 <StackPanel Spacing="12">
 
                         <!-- Shutter Speed -->
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
                                 <Button Content="-"
                                         Command="{Binding DecrementShutterSpeedCommand}"
                                         MinWidth="44" MinHeight="44"
@@ -38,7 +40,7 @@
                         </StackPanel>
 
                         <!-- Aperture -->
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
                                 <Button Content="-"
                                         Command="{Binding DecrementApertureCommand}"
                                         MinWidth="44" MinHeight="44"
@@ -55,7 +57,7 @@
                         </StackPanel>
 
                         <!-- ISO -->
-                        <StackPanel Orientation="Horizontal" Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
                                 <Button Content="-"
                                         Command="{Binding DecrementIsoCommand}"
                                         MinWidth="44" MinHeight="44"
@@ -77,34 +79,31 @@
                         </StackPanel>
                 </StackPanel>
 
-                <!-- Delay Timer Selection -->
-                <TextBlock Text="Capture Delay" FontSize="18" FontWeight="Bold" Margin="0,16,0,0" />
-                <ComboBox SelectedIndex="{Binding DelaySecondsIndex}"
-                          MinHeight="44"
-                          MinWidth="200">
-                        <ComboBoxItem Content="No delay" />
-                        <ComboBoxItem Content="2 seconds" />
-                        <ComboBoxItem Content="5 seconds" />
-                        <ComboBoxItem Content="10 seconds" />
-                </ComboBox>
-
-                <!-- Histogram Display Mode -->
-                <TextBlock Text="Histogram Display" FontSize="18" FontWeight="Bold" Margin="0,16,0,0" />
-                <ComboBox SelectedIndex="{Binding HistogramModeIndex}"
-                          MinHeight="44"
-                          MinWidth="200">
-                        <ComboBoxItem Content="None" />
-                        <ComboBoxItem Content="Luminance" />
-                        <ComboBoxItem Content="RGB" />
-                </ComboBox>
+                <!-- Delay Timer and Histogram Selection -->
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                        <ComboBox SelectedIndex="{Binding DelaySecondsIndex}"
+                                  MinHeight="44"
+                                  Width="120">
+                                <ComboBoxItem Content="No delay" />
+                                <ComboBoxItem Content="2 seconds" />
+                                <ComboBoxItem Content="5 seconds" />
+                                <ComboBoxItem Content="10 seconds" />
+                        </ComboBox>
+                        <ComboBox SelectedIndex="{Binding HistogramModeIndex}"
+                                  MinHeight="44"
+                                  Width="140">
+                                <ComboBoxItem Content="No histogram" />
+                                <ComboBoxItem Content="Luminance" />
+                                <ComboBoxItem Content="RGB" />
+                        </ComboBox>
+                </StackPanel>
 
                 <!-- Composition Aid Mode -->
-                <TextBlock Text="Composition Aid" FontSize="18" FontWeight="Bold" Margin="0,16,0,0" />
                 <StackPanel Orientation="Horizontal" Spacing="8">
                         <ComboBox SelectedIndex="{Binding CompositionModeIndex}"
                                   MinHeight="44"
-                                  MinWidth="200">
-                                <ComboBoxItem Content="None" />
+                                  Width="160">
+                                <ComboBoxItem Content="No Aid" />
                                 <ComboBoxItem Content="Rule of Thirds" />
                                 <ComboBoxItem Content="Golden Ratio" />
                                 <ComboBoxItem Content="Golden Triangle" />

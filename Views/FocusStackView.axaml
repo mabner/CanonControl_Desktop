@@ -15,7 +15,7 @@
                        Margin="0,0,0,8" />
 
             <!-- Current Camera Settings (Read-only) -->
-            <Border Background="#F5F5F5" Padding="12" CornerRadius="4">
+            <Border Background="DimGray" Padding="12" CornerRadius="4">
                 <StackPanel Spacing="8">
                     <TextBlock Text="Current Camera Settings" FontSize="14" FontWeight="Bold" />
                     <TextBlock Text="{Binding ExposureSummary}"
@@ -117,7 +117,7 @@
             <!-- Number of Shots -->
             <StackPanel Spacing="8">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                    <TextBlock Text="Number of Shots:" FontSize="16" VerticalAlignment="Center" />
+                    <TextBlock Text="Number of Shots:" FontSize="18" VerticalAlignment="Center" />
                     <TextBlock Text="(auto)"
                                FontSize="14"
                                Foreground="#1976D2"
