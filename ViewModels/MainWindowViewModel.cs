@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CanonControl.Models;
 using CanonControl.Services;
@@ -101,6 +102,8 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanConnect))]
     [NotifyPropertyChangedFor(nameof(CanDisconnect))]
+    [NotifyPropertyChangedFor(nameof(ConnectionButtonLabel))]
+    [NotifyPropertyChangedFor(nameof(ConnectionButtonTextColour))]
     [NotifyCanExecuteChangedFor(nameof(ToggleLiveViewCommand))]
     [NotifyCanExecuteChangedFor(nameof(ContextCaptureCommand))]
     private bool _isCameraConnected;
@@ -112,6 +115,11 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(WindowTitle))]
     private string _cameraName = string.Empty;
+
+    // computed label for single connection button
+    public string ConnectionButtonLabel => IsCameraConnected ? "Disconnect" : "Connect";
+    public IBrush ConnectionButtonTextColour =>
+        IsCameraConnected ? Brushes.IndianRed : Brushes.OliveDrab;
 
     [ObservableProperty]
     private int? _batteryPercentage;
@@ -182,6 +190,12 @@ public partial class MainWindowViewModel : ViewModelBase
         nameof(MoveFocusRightCommand)
     )]
     private double _focusPointY = 0.5;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FocusSquareButtonLabel))]
+    private bool _isFocusSquareVisible = true;
+
+    public string FocusSquareButtonLabel => IsFocusSquareVisible ? "Hide AF" : "Show AF";
 
     // settings
     private int _liveViewFrameRate = 30;
@@ -273,6 +287,19 @@ public partial class MainWindowViewModel : ViewModelBase
         BatteryPercentage = null;
         BatteryStatus = "Battery Unknown";
         StopBatteryPolling();
+    }
+
+    [RelayCommand]
+    private async Task ToggleConnection()
+    {
+        if (IsCameraConnected)
+        {
+            DisconnectCamera();
+        }
+        else
+        {
+            await ConnectCamera();
+        }
     }
 
     private System.Threading.CancellationTokenSource? _batteryPollingCts;
@@ -534,6 +561,8 @@ public partial class MainWindowViewModel : ViewModelBase
         )
         {
             OnPropertyChanged(nameof(ContextCaptureLabel));
+            // Notify the ContextCapture command that its CanExecute state may have changed.
+            ContextCaptureCommand.NotifyCanExecuteChanged();
         }
     }
 
@@ -854,6 +883,12 @@ public partial class MainWindowViewModel : ViewModelBase
             FocusPointY = yNormalized;
             _cameraService.ClickAfAtPoint(xNormalized, yNormalized);
         }
+    }
+
+    [RelayCommand]
+    private void ToggleFocusSquare()
+    {
+        IsFocusSquareVisible = !IsFocusSquareVisible;
     }
 
     // computed property for context-aware capture button label

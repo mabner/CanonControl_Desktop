@@ -277,7 +277,8 @@ public partial class MainWindow : Window
         if (DataContext is MainWindowViewModel vm && vm.IsLiveViewActive)
         {
             var grid = sender as Grid;
-            if (grid == null) return;
+            if (grid == null)
+                return;
 
             var point = e.GetPosition(grid);
             double xNormalized = point.X / grid.Bounds.Width;

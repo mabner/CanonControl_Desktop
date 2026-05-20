@@ -27,9 +27,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Platforms\Windows\EDSDK.dll" Link="runtimes/win-x64/native/EDSDK.dll" CopyToOutputDirectory="Always" />
-    <None Include="Platforms\Linux\x64\libEDSDK.so" Link="runtimes/linux-x64/native/libEDSDK.so" CopyToOutputDirectory="Always" />
-    <None Include="Platforms\Linux\arm64\libEDSDK.so" Link="runtimes/linux-arm64/native/libEDSDK.so" CopyToOutputDirectory="Always" />
+    <None
+      Include="Platforms\Windows\EDSDK.dll"
+      Link="runtimes/win-x64/native/EDSDK.dll"
+      CopyToOutputDirectory="Always"
+    />
+    <None
+      Include="Platforms\Linux\x64\libEDSDK.so"
+      Link="runtimes/linux-x64/native/libEDSDK.so"
+      CopyToOutputDirectory="Always"
+    />
+    <None
+      Include="Platforms\Linux\arm64\libEDSDK.so"
+      Link="runtimes/linux-arm64/native/libEDSDK.so"
+      CopyToOutputDirectory="Always"
+    />
   </ItemGroup>
 
   <ItemGroup>
