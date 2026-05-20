@@ -3,15 +3,16 @@
              xmlns:helpers="using:CanonControl.Helpers"
              x:Class="CanonControl.App"
              xmlns:local="using:CanonControl"
-             RequestedThemeVariant="Default">
-    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             xmlns:themes="clr-namespace:Material.Styles.Themes;assembly=Material.Styles"
+             RequestedThemeVariant="Dark">
 
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
 
     <Application.Styles>
-        <FluentTheme />
+        <SimpleTheme />
+
 
         <Style Selector="TextBlock">
             <Setter Property="FontSize" Value="18" />
@@ -20,17 +21,17 @@
         <Style Selector="Button">
             <Setter Property="FontSize" Value="18" />
             <Setter Property="Padding" Value="12,8" />
-            <Setter Property="MinWidth" Value="80" />
+            <Setter Property="MinWidth" Value="50" />
             <Setter Property="MinHeight" Value="50" />
         </Style>
 
         <Style Selector="Button.accent">
-            <Setter Property="Background" Value="#3784FF" />
-            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#4C87A8" />
+            <Setter Property="Foreground" Value="white" />
         </Style>
 
         <Style Selector="Button > TextBlock">
-            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontSize" Value="18" />
         </Style>
     </Application.Styles>
 

@@ -15,33 +15,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.0.1" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.0.1" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.1" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.1" />
+    <PackageReference Include="Avalonia" Version="12.0.3" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.3" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.3" />
+    <PackageReference Include="Avalonia.Themes.Simple" Version="12.0.3" />
     <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1">
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.1" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <None
-      Include="Platforms\Windows\EDSDK.dll"
-      Link="runtimes/win-x64/native/EDSDK.dll"
-      CopyToOutputDirectory="Always"
-    />
-    <None
-      Include="Platforms\Linux\x64\libEDSDK.so"
-      Link="runtimes/linux-x64/native/libEDSDK.so"
-      CopyToOutputDirectory="Always"
-    />
-    <None
-      Include="Platforms\Linux\arm64\libEDSDK.so"
-      Link="runtimes/linux-arm64/native/libEDSDK.so"
-      CopyToOutputDirectory="Always"
-    />
+    <None Include="Platforms\Windows\EDSDK.dll" Link="runtimes/win-x64/native/EDSDK.dll" CopyToOutputDirectory="Always" />
+    <None Include="Platforms\Linux\x64\libEDSDK.so" Link="runtimes/linux-x64/native/libEDSDK.so" CopyToOutputDirectory="Always" />
+    <None Include="Platforms\Linux\arm64\libEDSDK.so" Link="runtimes/linux-arm64/native/libEDSDK.so" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
