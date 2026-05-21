@@ -15,7 +15,7 @@
                        Margin="0,0,0,8" />
 
             <!-- Current Camera Settings (Read-only) -->
-            <Border Background="DimGray" Padding="12" CornerRadius="4">
+            <Border Background="#3C3C3C" Padding="12" CornerRadius="4">
                 <StackPanel Spacing="8">
                     <TextBlock Text="Current Camera Settings" FontSize="14" FontWeight="Bold" />
                     <TextBlock Text="{Binding ExposureSummary}"
@@ -26,7 +26,7 @@
             </Border>
 
             <!-- Focus Range (A to B) -->
-            <Border Background="#E8F4FD" Padding="12" CornerRadius="4" BorderBrush="#90CAF9" BorderThickness="1">
+            <Border Background="#505050" Padding="12" CornerRadius="4" BorderBrush="#4C87A8" BorderThickness="1">
                 <StackPanel Spacing="8">
                     <TextBlock Text="Focus Range (A to B)"
                                FontSize="16"
@@ -35,7 +35,7 @@
                     <!-- Helper text -->
                     <TextBlock Text="Drive focus to near end, press Set A. Drive to far end, press Set B. Shot count is calculated automatically."
                                FontSize="12"
-                               Foreground="#1565C0"
+                               Foreground="#4C87A8"
                                TextWrapping="Wrap" />
 
                     <!-- Set A / Set B buttons -->
@@ -47,7 +47,7 @@
                                 MinHeight="44"
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Center"
-                                Background="#1976D2"
+                                Background="#4C87A8"
                                 Foreground="White" />
                         <Button Grid.Column="2"
                                 Content="Set B (Far)"
@@ -74,7 +74,7 @@
                                    Text="{Binding PointALabel}"
                                    FontSize="13"
                                    FontWeight="SemiBold"
-                                   Foreground="#1565C0"
+                                   Foreground="#4C87A8"
                                    TextAlignment="Center" />
                         <TextBlock Grid.Column="1"
                                    Text="{Binding PointBLabel}"
@@ -120,7 +120,7 @@
                     <TextBlock Text="Number of Shots:" FontSize="18" VerticalAlignment="Center" />
                     <TextBlock Text="(auto)"
                                FontSize="14"
-                               Foreground="#1976D2"
+                               Foreground="#4C87A8"
                                VerticalAlignment="Center"
                                IsVisible="{Binding IsRangeValid}" />
                 </StackPanel>
@@ -129,14 +129,18 @@
                                Maximum="1000"
                                Increment="1"
                                MinHeight="44"
-                               IsEnabled="{Binding !IsRangeValid}" />
+                               IsEnabled="{Binding !IsRangeValid}">
+                    <NumericUpDown.InnerLeftContent>
+                        <TextBlock Text="Shots: " VerticalAlignment="Center" />
+                    </NumericUpDown.InnerLeftContent>
+                </NumericUpDown>
                 <TextBlock Text="Total number of images to capture"
                            FontSize="12"
                            Foreground="Gray"
                            IsVisible="{Binding !IsRangeValid}" />
                 <TextBlock Text="Calculated from A/B range and step size"
                            FontSize="12"
-                           Foreground="#1976D2"
+                           Foreground="#4C87A8"
                            IsVisible="{Binding IsRangeValid}" />
             </StackPanel>
 
@@ -150,10 +154,10 @@
                                MinHeight="44"
                                IsEnabled="{Binding !IsRunning}" />
                 <TextBlock Text="Focus steps (Near1 pulses) to move between shots"
-                           FontSize="12"
+
                            Foreground="Gray" />
             </StackPanel>
-
+            <!-- FontSize="12" -->
             <!-- Shoot Interval -->
             <StackPanel Spacing="8">
                 <TextBlock Text="Shoot Interval (seconds):" FontSize="16" />
@@ -182,7 +186,7 @@
             </StackPanel>
 
             <!-- Info -->
-            <Border Background="#F0F0F0"
+            <Border Background="#3C3C3C"
                     Padding="12"
                     CornerRadius="4"
                     Margin="0,8,0,0">

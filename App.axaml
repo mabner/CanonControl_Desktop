@@ -33,6 +33,10 @@
         <Style Selector="Button > TextBlock">
             <Setter Property="FontSize" Value="18" />
         </Style>
+
+        <Style Selector="NumericUpDown">
+            <Setter Property="FontSize" Value="18" />
+        </Style>
     </Application.Styles>
 
     <Application.Resources>
