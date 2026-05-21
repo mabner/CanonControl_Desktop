@@ -118,6 +118,7 @@
             <StackPanel Spacing="8">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <TextBlock Text="Number of Shots:" FontSize="18" VerticalAlignment="Center" />
+                    <TextBlock Text="Number of Shots:" FontSize="18" VerticalAlignment="Center" />
                     <TextBlock Text="(auto)"
                                FontSize="14"
                                Foreground="#4C87A8"
