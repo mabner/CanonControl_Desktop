@@ -158,3 +158,4 @@ Platforms/*
 *.md
 !README.md
 !Docs/MainWindowSketch.jpg
+.vscode/settings.json
