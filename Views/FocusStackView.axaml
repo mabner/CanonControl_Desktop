@@ -118,7 +118,6 @@
             <StackPanel Spacing="8">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <TextBlock Text="Number of Shots:" FontSize="18" VerticalAlignment="Center" />
-                    <TextBlock Text="Number of Shots:" FontSize="18" VerticalAlignment="Center" />
                     <TextBlock Text="(auto)"
                                FontSize="14"
                                Foreground="#4C87A8"
@@ -145,34 +144,41 @@
                            IsVisible="{Binding IsRangeValid}" />
             </StackPanel>
 
-            <!-- Step Size -->
-            <StackPanel Spacing="8">
-                <TextBlock Text="Step Size:" FontSize="16" />
-                <NumericUpDown Value="{Binding StepSize}"
+            <!-- Step Size and Shoot Interval -->
+            <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,Auto,Auto"
+                  ColumnSpacing="16" RowSpacing="8">
+                <TextBlock Grid.Column="0" Grid.Row="0"
+                           Text="Step Size:" FontSize="16" />
+                <TextBlock Grid.Column="2" Grid.Row="0"
+                           Text="Shoot Interval (seconds):" FontSize="16" />
+
+                <NumericUpDown Grid.Column="0" Grid.Row="1"
+                               Value="{Binding StepSize}"
                                Minimum="1"
                                Maximum="100"
                                Increment="1"
-                               MinHeight="44"
+                               MinHeight="36"
+                               HorizontalAlignment="Stretch"
                                IsEnabled="{Binding !IsRunning}" />
-                <TextBlock Text="Focus steps (Near1 pulses) to move between shots"
-
-                           Foreground="Gray" />
-            </StackPanel>
-            <!-- FontSize="12" -->
-            <!-- Shoot Interval -->
-            <StackPanel Spacing="8">
-                <TextBlock Text="Shoot Interval (seconds):" FontSize="16" />
-                <NumericUpDown Value="{Binding ShootIntervalSeconds}"
+                <NumericUpDown Grid.Column="2" Grid.Row="1"
+                               Value="{Binding ShootIntervalSeconds}"
                                Minimum="0.5"
                                Maximum="10"
                                Increment="0.5"
                                FormatString="0.0"
-                               MinHeight="44"
+                               MinHeight="36"
+                               HorizontalAlignment="Stretch"
                                IsEnabled="{Binding !IsRunning}" />
-                <TextBlock Text="Wait time between shots for stabilization"
+
+                <TextBlock Grid.Column="0" Grid.Row="2"
+                           Text="Focus steps (Near1 pulses) to move between shots"
                            FontSize="12"
                            Foreground="Gray" />
-            </StackPanel>
+                <TextBlock Grid.Column="2" Grid.Row="2"
+                           Text="Wait time between shots for stabilization"
+                           FontSize="12"
+                           Foreground="Gray" />
+            </Grid>
 
             <!-- Status -->
             <StackPanel Spacing="8">

@@ -3,16 +3,18 @@
              xmlns:helpers="using:CanonControl.Helpers"
              x:Class="CanonControl.App"
              xmlns:local="using:CanonControl"
-             xmlns:themes="clr-namespace:Material.Styles.Themes;assembly=Material.Styles"
-             RequestedThemeVariant="Dark">
+             RequestedThemeVariant="Light">
 
     <Application.DataTemplates>
         <local:ViewLocator/>
     </Application.DataTemplates>
 
     <Application.Styles>
-        <SimpleTheme />
+        <FluentTheme DensityStyle="Compact" />
+      </Application.Styles>
 
+    <!-- <Application.Styles>
+        <SimpleTheme />
 
         <Style Selector="TextBlock">
             <Setter Property="FontSize" Value="18" />
@@ -37,7 +39,7 @@
         <Style Selector="NumericUpDown">
             <Setter Property="FontSize" Value="18" />
         </Style>
-    </Application.Styles>
+    </Application.Styles> -->
 
     <Application.Resources>
         <helpers:BoolToColorConverter x:Key="BoolToColorConverter" />
